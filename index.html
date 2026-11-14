@@ -663,6 +663,23 @@ U({id:'fist',name:'격투가 강철',grid:FIGHT,s:4,hp:700,atk:30,range:44,speed
 U({id:'cornbar',name:'옥수수익어가는바',grid:CORN_EX,s:5,hp:430,atk:58,range:185,speed:31,cd:3.5,cost:900,cool:24,kb:3,area:true,an:'beam',col:'#f0c837',acc:'#fff4a8',t:'EX',ty:['무속성'],pal:{Y:'#f3c52e',W:'#6f9e35',C:'#fff1a0'},freezeNeutral:0.35,freezeTime:2,trn:trnOf(7,10,6),desc:'세계편 2장 클리어 보상. 무속성 적에게만 35% 확률로 2초간 정지. 범위 공격, 느린 공격 속도, 보스보다 짧은 사거리.'}),
 U({id:'healthytooth',name:'건치',grid:TOOTH_EX,s:4,hp:1850,atk:155,range:295,speed:50,cd:2.4,cost:4000/1.5,cool:26,kb:4,area:true,an:'burst',col:'#e3f7ff',acc:'#6ac6ef',t:'EX',ty:['천사'],pal:{W:'#ffffff'},trn:trnOf(8,10,7),desc:'세계편 3장 클리어 보상. 거대한 이빨을 가진 상어 건치! 높은 체력과 공격력, 장거리 범위 공격. 이동은 준수하고 공격 간격은 조금 길어요.'})
 ];
+// 기본 캐릭터 3단 진화: 총합 Lv10에 2형, 총합 Lv30에 3형.
+// 3형은 2형에 큰 장식과 독자 팔레트를 추가해 외형을 구분합니다.
+const BASIC_THIRD_FORMS={
+  junchi:{name:'무지개준치',dec:['crown','wings','ring','spikes'],pal:{B:'#ff5a69',S:'#59c7ff',L:'#a77dff',Y:'#ffe45c',O:'#5ae0a0'},aura:'#a7ddff'},
+  gtong:{name:'초합금 건우요새',dec:['armor','horns','spikes','ring'],pal:{B:'#364f68',S:'#d6eafa',L:'#8bdfff',M:'#78aecf',N:'#34445f',Y:'#ffe05c'},aura:'#82d9ff'},
+  hanchi:{name:'심해황제 한치',dec:['crown','horns','spikes','wings'],col:'#5035aa',acc:'#eb8bff',aura:'#c19aff'},
+  dorag:{name:'초염왕 도라지과자맨',dec:['flame','horns','cape','spikes'],col:'#ed3b19',acc:'#fff06b',aura:'#ff6a24'},
+  energy:{name:'궁극 에너지원',dec:['ring','wings','spikes','crown'],col:'#3a65ff',acc:'#e7faff',aura:'#96baff'}
+};
+MY.filter(u=>u.t==='N'&&u.f2).forEach(u=>{
+  const spec=BASIC_THIRD_FORMS[u.id];if(!spec)return;
+  const second=u.f2;
+  u.f3=Object.assign({},second,{name:spec.name,grid:deco(second.grid,spec.dec),aura:spec.aura});
+  if(spec.pal)u.f3.pal=spec.pal;
+  if(u.id==='junchi'){u.f3.gold=false;u.f3.rainbow=true;}
+  if(spec.col){u.f3.col=spec.col;u.f3.acc=spec.acc;delete u.f3.pal;}
+});
 const ATKM=2.5; // 공격력 전체 상향 (전투가 너무 길어서 아군·적 모두 ×2.5)
 MY.forEach(u=>{u.atk*=ATKM;});
 const TIERN={N:'일반',R:'레어',SR:'슈퍼 레어',UR:'울트라 슈퍼 레어',EX:'EX'};
@@ -875,10 +892,25 @@ const lvCost=(u,L)=>Math.round(120*L*(0.7+0.3*L)*TM[u.t]/10)*10;
 const avail=u=>u.t==='N'?(u.unlock==null||!!cleared[u.unlock]||!!own[u.id]):!!own[u.id];
 const lockTxt=u=>u.t==='N'?(u.unlock+1)+'번 맵 클리어 또는 일반 뽑기':u.t==='EX'?({'fist':'1','cornbar':'2','healthytooth':'3'}[u.id]||'1')+'장 마지막 스테이지 보스를 쓰러뜨리면 획득':'레어 뽑기에서만 획득';
 const totalLevel=id=>(lv[id]||1)+(plusLv[id]||0);
-const evolveLevel=u=>u.t==='N'?30:10;
-const f2on=id=>{const u=MY.find(x=>x.id===id);return !!(u&&u.f2&&totalLevel(id)>=evolveLevel(u)&&fsel[id]!==1);};
-const lm=id=>(1+0.1*(totalLevel(id)-1))*(f2on(id)?1.25:1);
-const fm=u=>f2on(u.id)?Object.assign({},u,u.f2,{f:1,s:u.s}):u; // 기본캐릭터는 총합 Lv30, 나머지는 총합 Lv10 폼 체인지
+const evolveLevel=u=>10;
+const evolutionStage=u=>{
+  if(!u.f2||totalLevel(u.id)<10)return 1;
+  const choice=fsel[u.id];
+  if(choice===1)return 1;
+  if(u.t==='N'&&u.f3&&totalLevel(u.id)>=30){
+    // 기존 2형 저장값은 3형 자동 진화를 막지 않습니다. 2형 고정은 별도 값 22.
+    return choice===22?2:3;
+  }
+  return 2;
+};
+const f2on=id=>{const u=MY.find(x=>x.id===id);return !!(u&&evolutionStage(u)>=2);};
+const lm=id=>{const u=MY.find(x=>x.id===id),stage=u?evolutionStage(u):1;
+  return (1+0.1*(totalLevel(id)-1))*(stage===3?1.5:stage===2?1.25:1);
+};
+const fm=u=>{const stage=evolutionStage(u);
+  return stage===3?Object.assign({},u,u.f2,u.f3,{f:3,s:u.s}):
+    stage===2?Object.assign({},u,u.f2,{f:2,s:u.s}):u;
+}; // 기본: 10레벨 2형, 30레벨 3형. 비기본: 10레벨 2형.
 const tnm=(id,k)=>1+0.05*((tn[id]||{})[k]||0);
 const fl=()=>(form.length?form:MY.map(u=>u.id)).filter(id=>{const u=MY.find(x=>x.id===id);return u&&avail(u);}).slice(0,10);
 function ico(u){const v=fm(u),cv=document.createElement('canvas');cv.className='ic';cv.width=Math.max(...v.grid.map(r=>r.length))*v.s;cv.height=v.grid.length*v.s;spr(v.grid,0,0,v.s,false,pl(v),cv.getContext('2d'));return cv;}
@@ -1023,17 +1055,25 @@ function buildUp(){
       +'<br>생산 비용 (세계편 2장 기준) '+Math.round(u.cost*CHC[1]).toLocaleString()+'원 · 쿨타임 '+unitCooldown(u).toFixed(1)+'초 · 히트백 '+u.kb+'회</small>'
       +'<br><small>굉장함(×2) → '+(STR[at].join('·')||'없음')+' 속성의 적 · 받는 피해 반감(×0.5) → '+RES[u.ty[0]].join('·')+' 속성의 공격'
       +'<br>이 캐릭터에게 굉장함인 적 속성: '+(wk.join('·')||'없음')+'</small>';
-    if(u0.f2)info.innerHTML+=total>=evolveLevel(u0)?'<br><small>폼 체인지 가능 (XP Lv + 중복 +레벨 = '+total+'): 1형 '+u0.name+' / 2형 '+u0.f2.name+' · 지금 '+(u.f?'2형':'1형')+'</small>'
-       :'<br><small>총합 Lv'+evolveLevel(u0)+' 진화 → '+u0.f2.name+' (현재 '+total+' / '+evolveLevel(u0)+', XP Lv와 +레벨 합산)</small>';
+    if(u0.f2){
+      const stages=['1형 '+u0.name,'2형 '+u0.f2.name];
+      if(u0.f3)stages.push('3형 '+u0.f3.name);
+      info.innerHTML+='<br><small>진화: 총합 Lv10에 2형'+(u0.f3?' · 총합 Lv30에 3형':'')+' (XP 레벨 + 뽑기 +레벨 = '+total+')<br>'+stages.join(' / ')+' · 현재 '+evolutionStage(u0)+'형</small>';
+    }
     if(!avail(u0))info.innerHTML+='<br>🔒 '+lockTxt(u0);
     else{const cap=lvCap(),row=document.createElement('div');row.style.cssText='margin-top:6px;display:flex;gap:6px;flex-wrap:wrap';
       const b=document.createElement('button');b.textContent=L>=cap?(cap<30?'Lv'+cap+' 한계':'MAX'):'강화 ('+cost.toLocaleString()+' XP)';b.disabled=L>=cap||xp<cost;
       b.onclick=()=>{xp-=cost;lv[id]=L+1;save();rb();};row.appendChild(b);
-      if(u0.f2&&total>=evolveLevel(u0)){const fb=document.createElement('button');fb.textContent=u.f?'1형으로 변경':'2형('+u0.f2.name+')으로 변경';fb.onclick=()=>{fsel[id]=u.f?1:2;save();rb();};row.appendChild(fb);}
+      if(u0.f2&&total>=10){
+        const stage=evolutionStage(u0),choices=[{num:1,name:u0.name,value:1},{num:2,name:u0.f2.name,value:u0.f3&&total>=30?22:2}];
+        if(u0.f3&&total>=30)choices.push({num:3,name:u0.f3.name,value:3});
+        for(const choice of choices){const fb=document.createElement('button');fb.textContent=choice.num+'형 '+choice.name+(stage===choice.num?' ✓':'');fb.disabled=stage===choice.num;
+          fb.onclick=()=>{fsel[id]=choice.value;save();rb();};row.appendChild(fb);}
+      }
       info.appendChild(row);info.appendChild(trainUI(u0));}
     d.appendChild(cv);d.appendChild(info);box.appendChild(d);});
   const cap=lvCap();
-  box.insertAdjacentHTML('beforeend','<p><small>XP 레벨은 '+cap+'까지 강화할 수 있습니다. 중복 뽑기 +레벨은 별도로 무제한 누적됩니다. 기본 캐릭터는 XP Lv + 중복 +레벨이 30이 되면 다음 형태를 해금합니다.'+(cap<30?'<br>세계편 '+(cap===10?'2':'3')+'장을 클리어하면 XP Lv'+(cap+10)+'까지 해금됩니다.':'')+'</small></p>');
+  box.insertAdjacentHTML('beforeend','<p><small>XP 레벨은 '+cap+'까지 강화할 수 있습니다. 중복 뽑기 +레벨은 별도로 무제한 누적됩니다. 기본 캐릭터는 XP Lv + 중복 +레벨 합계가 10이면 2형, 30이면 3형으로 진화합니다.'+(cap<30?'<br>세계편 '+(cap===10?'2':'3')+'장을 클리어하면 XP Lv'+(cap+10)+'까지 해금됩니다.':'')+'</small></p>');
 }
 
 // 기본 능력: 세계편 2장 클리어 시 레벨 상한 20. 연구력은 생산 대기시간을 단축합니다.
@@ -1299,7 +1339,7 @@ function dsp(u,ft){
   if(u.team===0&&ft===0&&(T.f||T.glow)){g.save();g.globalAlpha=0.22+0.1*Math.sin(S.t*6);g.fillStyle=T.aura||'#ffd84a';g.beginPath();g.ellipse(u.x,GY-h/2+oy,w*0.75,h*0.7,0,0,7);g.fill();g.restore();}
   if(u.boss&&ft===0){g.save();g.globalAlpha=0.18+0.08*Math.sin(S.t*5);g.fillStyle='#ff3a2a';g.beginPath();g.ellipse(u.x,GY-h/2,w*0.8,h*0.75,0,0,7);g.fill();g.restore();}
   g.save();if(ft===0){g.fillStyle='#1b140b55';g.beginPath();g.ellipse(u.x,GY+1,Math.max(12,w*.36),5,0,0,Math.PI*2);g.fill();}g.globalAlpha=al;g.translate(u.x+ox,GY+oy);g.rotate(rot);g.scale(sx,sy);
-  const pal=u.team===1?(u.code==='O'?pl(MY.find(z=>z.id==='cornbar')):u.code==='C'?pl(MY.find(z=>z.id==='healthytooth')):(T._p||(T._p=cp(T.col,T.acc)))):(T.gold?{B:'#c98a14',S:'hsl(46,100%,'+(58+12*Math.sin(S.t*6))+'%)',L:'hsl(50,100%,'+(80+10*Math.sin(S.t*6+1))+'%)'}:(T._p||(T._p=pl(T))));
+  const pal=u.team===1?(u.code==='O'?pl(MY.find(z=>z.id==='cornbar')):u.code==='C'?pl(MY.find(z=>z.id==='healthytooth')):(T._p||(T._p=cp(T.col,T.acc)))):(T.rainbow?{B:'hsl('+((S.t*75)%360)+',90%,58%)',S:'hsl('+((S.t*75+75)%360)+',95%,69%)',L:'hsl('+((S.t*75+155)%360)+',90%,80%)',Y:'hsl('+((S.t*75+225)%360)+',95%,65%)',O:'hsl('+((S.t*75+295)%360)+',95%,65%)'}:T.gold?{B:'#c98a14',S:'hsl(46,100%,'+(58+12*Math.sin(S.t*6))+'%)',L:'hsl(50,100%,'+(80+10*Math.sin(S.t*6+1))+'%)'}:(T._p||(T._p=pl(T))));
   spr(grid,-w/2,-h,s,u.team===0,pal);
   g.restore();
   if(ft===0&&u.sl>0){g.save();g.globalAlpha=0.28;g.fillStyle='#4aa3ff';g.beginPath();g.ellipse(u.x,GY-h/2+oy,w*0.7,h*0.65,0,0,7);g.fill();g.restore();txt('느림',u.x,GY-h-18,10);}
