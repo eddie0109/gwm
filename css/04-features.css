@@ -1,0 +1,86 @@
+/* 전투 속도 조절: 돈 표시 바로 아래 */
+#battleMoneyTools{display:flex;flex-direction:column;align-items:flex-end;gap:5px;position:relative;z-index:2}
+#speedToggle{font-size:13px;line-height:1.1;padding:6px 10px;min-width:116px;border:3px solid #25170c;border-bottom-width:5px;border-radius:6px;background:linear-gradient(#e6e1d8,#b8afa3);color:#372b1b;font-weight:900;cursor:pointer;white-space:nowrap}
+#speedToggle.on{background:linear-gradient(#fff6a5,#ffce38 52%,#f47a20);color:#2a1507}
+/* ===== 월드 선택 / 챕터 탭 / 보물 세트 ===== */
+.wgrid{flex:1;display:grid;grid-template-columns:repeat(5,1fr);gap:10px;align-content:center;padding:6px 2px}
+.wcard{height:285px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:10px;font-size:1.2rem;line-height:1.3;white-space:normal;text-align:center}
+.wcard .wi{font-size:3rem;line-height:1}
+.wcard small{font-weight:800;font-size:.78rem;opacity:.85;line-height:1.35}
+.wcard.wip{filter:grayscale(.85) brightness(.88)}
+.chtab{display:flex;gap:7px}.chtab button{flex:1;padding:7px 4px;font-size:.92rem;border-radius:5px;background:linear-gradient(#e4d8b8,#b7a985);color:#4a3a22}
+.chtab button.on{background:linear-gradient(#fff6a5,#ffce38 52%,#f47a20);color:#2a1507}
+.tit{display:inline-block;margin:3px 4px 0 0;padding:3px 9px;border:2px solid #25170c;border-radius:5px;background:#e4d8b8;color:#8a7a5c;font-size:.82rem;font-weight:800}
+.tit.on{background:linear-gradient(#fff3a5,#f8c34b);color:#2a180a}
+.tre-badge{position:absolute;right:-5px;top:-6px;z-index:2;background:#ffd84a;color:#402300;border:2px solid #24170d;border-radius:50%;font-size:13px;line-height:20px;width:23px;height:23px;box-shadow:1px 2px 0 #0005}
+.tag{display:inline-block;padding:1px 7px;border:2px solid #25170c;border-radius:4px;font-size:.72rem;font-weight:900;margin-right:3px;color:#25170c}
+
+/* 전투 중 유닛 아이콘 길게 누르기: 캐릭터 도감 패널 */
+#unitInfoLayer{position:absolute;inset:0;z-index:8;display:flex;align-items:center;justify-content:center;background:#050b15cf;padding:12px;box-sizing:border-box}
+#unitInfoLayer.hide{display:none}
+#unitInfoCard{width:min(710px,96%);max-height:96%;box-sizing:border-box;overflow-y:auto;display:flex;flex-direction:column;gap:8px;padding:12px 16px;border:3px solid #f2cc75;border-radius:12px;background:linear-gradient(145deg,#203b5d,#0b192d);color:#faf4e5;box-shadow:0 10px 30px #000d}
+#unitInfoHead{display:flex;align-items:center;gap:12px}
+#unitInfoPortrait{width:70px;min-width:70px;height:64px;display:flex;align-items:center;justify-content:center;border:2px solid #bdb2a0;border-radius:8px;background:#f4dfb6}
+#unitInfoPortrait canvas{max-width:65px;max-height:58px;image-rendering:pixelated}
+#unitInfoName{flex:1;min-width:0}#unitInfoName b{font-size:1.16rem;color:#ffe49a}
+#unitInfoClose{align-self:flex-start;padding:5px 12px;font-size:.85rem}
+#unitInfoBody{display:grid;grid-template-columns:1fr 1fr;gap:7px 12px;font-size:.85rem;line-height:1.45}
+#unitInfoBody section{background:#ffffff12;border:1px solid #ffffff30;padding:7px 9px;border-radius:7px}
+#unitInfoBody section b{color:#ffe39c;display:block;margin-bottom:3px}
+#unitInfoBody .wide{grid-column:1/-1}
+#unitInfoBody .tag{margin-bottom:2px}
+#unitInfoHint{font-size:.73rem;color:#c5cee0;text-align:center}
+#slots button{touch-action:none;-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
+
+/* 적도감 / 출석 */
+#enemyDex,#attendance{overflow-y:auto}
+#dexList,#dailyList{overflow-y:auto;min-height:0;flex:1;padding:4px 4px 20px}
+.dex-item{display:flex;align-items:center;gap:12px;text-align:left;width:100%;margin:5px 0;padding:8px 12px;background:linear-gradient(120deg,#203b5a,#122840);border:1px solid #6689b1;color:white}
+.dex-item canvas{flex:none;image-rendering:pixelated}
+.dex-item span{flex:1}
+.dex-item small{display:block;color:#b8cee8;margin-top:4px}
+.dex-detail{padding:11px;line-height:1.65;background:#091b30;border:1px solid #7796b5;border-radius:9px;margin:7px 0 12px}
+.daily-grid{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:5px}
+.daily-cell{background:#162d49;border:1px solid #54779e;border-radius:9px;text-align:center;padding:10px 3px;font-size:12px}
+.daily-cell.done{background:#28503f;border-color:#71d6a1}
+.daily-cell.today{border:2px solid #ffd46c}
+  .daily-action{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+/* 넓은 월드 스테이지 선택판: 지도와 국기 / 국가명으로 선택 */
+#select{gap:5px;padding:9px 13px;background:radial-gradient(ellipse at 50% 70%,#e9c078 0%,#fbebc2 70%)}
+#select .nav{gap:4px}#select .nav button{padding:5px 3px;font-size:.85rem}
+#grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:5px;flex:1;min-height:0;overflow:hidden;padding:5px 2px 4px;background:linear-gradient(30deg,#71b8d030,#f9d79260);border-radius:9px}
+#grid button{height:100%;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;padding:2px 2px;line-height:1.05;overflow:hidden;border-width:2px;border-bottom-width:3px;border-radius:6px;font-size:.69rem}
+#grid button b{font-size:.72rem;margin:0;color:#8d3c16}
+#grid button .stage-flag{font-size:1.5rem;line-height:1;filter:drop-shadow(1px 2px 0 #0003)}
+#grid button .stage-name{font-size:.66rem;line-height:1;white-space:nowrap;letter-spacing:-.07em;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#grid button .stage-ok{position:absolute;top:0;right:2px;color:#12753b;font-size:.7rem}
+#grid button .tre-badge{right:0;top:0;width:14px;height:14px;line-height:12px;font-size:10px}
+#select .chtab button{padding:4px 4px}
+/* 기본 캐릭터의 XP 레벨과 중복 뽑기 +레벨은 별도 표시 */
+.unit-level{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}
+.unit-plus{color:#e7a300;font-weight:1000;text-shadow:1px 1px #0008}
+.unit-evo{color:#ad5217;font-weight:900}
+/* 유닛과 적의 도트 그림자와 외곽선 */
+#forml .ic,#upl .ic,#slots canvas{filter:drop-shadow(1px 3px 0 #22160b80) drop-shadow(0 0 1px #27180c)}
+
+/* 확장: 뽑기 배너 / 전투 편성 / 도감 */
+#select .nav{gap:3px}#select .nav button{font-size:.73rem;padding:7px 2px}
+#bannerTabs{display:flex;gap:5px;justify-content:center;flex:none;flex-wrap:wrap}
+#bannerTabs button{padding:4px 10px;font-size:.77rem;background:linear-gradient(#f9e6ba,#f0bd60)}
+#bannerTabs button.selected{background:linear-gradient(#ffdcf5,#e48bea);border-color:#923c9e}
+#formationBar{flex:none;display:grid;grid-template-columns:repeat(10,minmax(0,1fr));gap:4px;padding:5px;background:#80613a;border-radius:8px}
+#formationBar button{min-width:0;height:68px;padding:2px;font-size:10px;line-height:1.2;overflow:hidden}
+#formationBar canvas{display:block;margin:auto;max-width:95%;max-height:40px}
+#formTabs{flex:none;gap:5px}
+#formTabs button{padding:4px;font-size:.79rem}
+#forml{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:6px;align-content:start}
+#forml .tr{margin:0;min-width:0;padding:5px;display:flex;flex-direction:column;text-align:center;align-items:center;font-size:12px;cursor:grab}
+#forml .tr .ic{max-height:48px;max-width:90%}
+#forml .tr>div{width:100%;min-width:0}
+#forml .tr button{padding:3px 8px;font-size:11px}
+#myDexList{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:7px;padding:6px}
+#myDexList .tr{margin:0;text-align:center;padding:8px;min-width:0}
+#myDexList .tr canvas{display:block;margin:3px auto;max-height:64px;max-width:90%}
+#myDexList .tr b{display:block;overflow-wrap:anywhere}
+#myDexList .tr small{display:block;font-size:11px}
+#myDexList .tr button{font-size:11px;padding:3px 6px}
