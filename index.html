@@ -398,7 +398,24 @@ button:focus-visible{outline:3px dashed #b63c1d;outline-offset:2px}
 .daily-cell{background:#162d49;border:1px solid #54779e;border-radius:9px;text-align:center;padding:10px 3px;font-size:12px}
 .daily-cell.done{background:#28503f;border-color:#71d6a1}
 .daily-cell.today{border:2px solid #ffd46c}
-.daily-action{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+  .daily-action{display:flex;gap:10px;align-items:center;justify-content:center;flex-wrap:wrap}
+/* 넓은 월드 스테이지 선택판: 지도와 국기 / 국가명으로 선택 */
+#select{gap:5px;padding:9px 13px;background:radial-gradient(ellipse at 50% 70%,#e9c078 0%,#fbebc2 70%)}
+#select .nav{gap:4px}#select .nav button{padding:5px 3px;font-size:.85rem}
+#grid{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));grid-template-rows:repeat(6,minmax(0,1fr));gap:5px;flex:1;min-height:0;overflow:hidden;padding:5px 2px 4px;background:linear-gradient(30deg,#71b8d030,#f9d79260);border-radius:9px}
+#grid button{height:100%;min-height:0;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:1px;padding:2px 2px;line-height:1.05;overflow:hidden;border-width:2px;border-bottom-width:3px;border-radius:6px;font-size:.69rem}
+#grid button b{font-size:.72rem;margin:0;color:#8d3c16}
+#grid button .stage-flag{font-size:1.5rem;line-height:1;filter:drop-shadow(1px 2px 0 #0003)}
+#grid button .stage-name{font-size:.66rem;line-height:1;white-space:nowrap;letter-spacing:-.07em;max-width:100%;overflow:hidden;text-overflow:ellipsis}
+#grid button .stage-ok{position:absolute;top:0;right:2px;color:#12753b;font-size:.7rem}
+#grid button .tre-badge{right:0;top:0;width:14px;height:14px;line-height:12px;font-size:10px}
+#select .chtab button{padding:4px 4px}
+/* 기본 캐릭터의 XP 레벨과 중복 뽑기 +레벨은 별도 표시 */
+.unit-level{display:inline-flex;align-items:baseline;gap:3px;white-space:nowrap}
+.unit-plus{color:#e7a300;font-weight:1000;text-shadow:1px 1px #0008}
+.unit-evo{color:#ad5217;font-weight:900}
+/* 유닛과 적의 도트 그림자와 외곽선 */
+#forml .ic,#upl .ic,#slots canvas{filter:drop-shadow(1px 3px 0 #22160b80) drop-shadow(0 0 1px #27180c)}
 </style>
 </head>
 <body>
@@ -562,13 +579,45 @@ const trnOf=(hp,atk,spd,pool)=>({pool:pool||12,max:{hp,atk,spd}});
 const U=o=>Object.assign({s:4,kb:2,cool:8,cd:1,range:30,speed:34,hp:100,atk:10,cost:100,an:'slash',t:'R',trn:trnOf(8,8,6)},o);
 
 // EX 전용 도트 디자인: 에너지 구체/휴지통 실루엣을 재사용하지 않고 이름에 맞춘 형태
+// 옥수수 캐릭터: 양쪽 이파리 + 옥수수 알갱이 + 표정. 아군/적 공용 도트 모델
 const CORN_EX=[
-'.....KKKK.....','....KYYYYK....','...KYYYYYYK...','..KYYYYYYYYK..','.KYYYYYYYYYYK.','KYYYYYYYYYYYYK',
-'KYYKYYYYYYKYYK','KYYYYYYYYYYYYK','KYYKYYYYYYKYYK','KYYYYYYYYYYYYK','.KYYYYYYYYYYK.','..KYYYYYYYYK..',
-'...KYYYYYYK...','....KYYYYK....','.....KKKK.....','....WW..WW....','...WW....WW...'];
+'......KKKKKK......',
+'.....KYYYYYYK.....',
+'....KYOYYOYYK.....',
+'...KYYOYYOYYOK....',
+'..KYOYYOYYOYYOK...',
+'.KYYOYYOYYOYYOK...',
+'KWWYOYYOYYOYYOWWK.',
+'KWKYYKYYOYYKYYKWK.',
+'KWWYYPYYOYYPYYWWK.',
+'.KWYYOYYYYOYYWWK..',
+'..KWYYOYPYOYYWK...',
+'...KWYOYYYOOYWK....',
+'....KWYYOYYYWK.....',
+'.....KWYYYYWK......',
+'......KWWWWK.......',
+'.....KWW..WWK......',
+'....KWW....WWK.....',
+'...KKK......KKK....'];
+// 건치는 건강한 이빨을 가진 상어 형태. 적 보스와 아군이 같은 모델을 공유합니다.
 const TOOTH_EX=[
-'......KKKK......','.....KWWWWK.....','....KWWWWWWK....','...KWWWWWWWWK...','..KWWWWWWWWWWK..','.KWWWWWWWWWWWWK.','KWWWWWWWWWWWWWWK',
-'KWWWWWWWWWWWWWWK','.KWWWWWWWWWWWWK.','..KWWWWWWWWWWK..','...KWWWWWWWWK...','....KWWWWWWK....','.....KWWWWK.....','......KKKK......'];
+'..................K.............',
+'.................KWK............',
+'................KWWWK...........',
+'...........KKKKKWWWWWKK.........',
+'.......KKKWWWWWWWWWWWWWWKK......',
+'....KKKWWWWWWWWWWWWWWWWWWWKK...',
+'..KKWWWWWWWHHHHWWWWWWWWWWWWKK.',
+'.KWWWWWWWWWWWWWWWWWWWWWWWWWWWWK',
+'KWWWWWWWWWWWWWWWWWWWWWWWKPWKWWWK',
+'KWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWWK',
+'.KWWWWWWWWWWWWWWWWWWWKKKKKKKKKK.',
+'..KKWWWWWWWWWWWWWWWWWWWWWWWWKK..',
+'....KKWWWWWWWWWWWWWWWWWWWWKK....',
+'......KKKKKKKKKKKKKKKKKKKK......',
+'.........KAAAAAAAAAAAAK.........',
+'...........KAAAAAAAAK...........',
+'.............KKKKKK.............'];
 
 const MY=[
 U({id:'junchi',name:'준치',grid:FISH,s:3,hp:60,atk:7,range:62,speed:42,cd:.8,cost:50,cool:5,kb:3,t:'N',ty:['무속성'],trn:trnOf(8,8,8),desc:'썩어도 준치! 가시가 많은 은빛 물고기예요. 가장 기본이 되는 단일 공격 유닛.',
@@ -584,7 +633,7 @@ U({id:'energy',name:'에너지원',grid:ORB,hp:140,atk:6,range:28,speed:70,cd:.4
 // ── 레어
 U({id:'mack',name:'고등어검사',grid:MACK,s:4,hp:90,atk:11,range:40,speed:52,cd:.7,cost:90,cool:6,kb:3,col:'#3f8ac8',acc:'#e8f4ff',t:'R',ty:['부유'],desc:'칼 한 자루로 빠르게 베는 고등어 검사. 이동이 빠르고 싸게 뽑을 수 있어요.',
   f2:{name:'고등어 사무라이',grid:deco(MACK,['horns','armor','cape']),col:'#2a5ab8',acc:'#ffe27a',aura:'#8fc0ff'}}),
-U({id:'clam',name:'조개방패',grid:CLAM,s:4,hp:380,atk:3,range:22,speed:24,cd:1.3,cost:140,cool:9,kb:1,col:'#e8b8c8',acc:'#fff2f6',t:'R',ty:['무속성'],trn:trnOf(12,3,4,10),desc:'단단한 껍데기로 앞을 막는 조개 방패병. 공격은 거의 못 하지만 아주 단단해요.',
+U({id:'clam',name:'조개방패',grid:CLAM,s:4,hp:380,atk:3,range:22,speed:24,cd:1.3,cost:200,cool:9,kb:1,col:'#e8b8c8',acc:'#fff2f6',t:'R',ty:['무속성'],trn:trnOf(12,3,4,10),desc:'단단한 껍데기로 앞을 막는 조개 방패병. 공격은 거의 못 하지만 아주 단단해요.',
   f2:{name:'진주 요새조개',grid:deco(CLAM,['crown','armor']),col:'#d6a0e8',acc:'#ffffff',aura:'#f2d6ff'}}),
 U({id:'puffer',name:'복어폭탄',grid:PUFF,s:4,hp:70,atk:16,range:60,speed:30,cd:1.6,cost:170,cool:11,kb:2,area:true,an:'burst',col:'#a8d070',acc:'#fff6a0',t:'R',ty:['좀비'],desc:'적 앞에서 펑! 부풀어 올라 주변을 한꺼번에 터뜨리는 복어 폭탄병.',
   f2:{name:'폭군 복어',grid:deco(PUFF,['spikes','flame']),col:'#f2a03a',acc:'#ff5a3a',aura:'#ffb36a'}}),
@@ -609,10 +658,10 @@ U({id:'shrimp',name:'불꽃새우',grid:SHRIMP,s:4,hp:260,atk:22,range:70,speed:
 U({id:'frog',name:'황소개구리',grid:FROG,s:5,hp:180,atk:120,range:280,minR:100,speed:22,cd:3.2,cost:2500,cool:25,kb:5,area:true,leap:true,an:'leap',slowS:true,col:'#4caf3a',acc:'#d6f0a0',aura:'#9be07a',t:'UR',ty:['고대종'],trn:trnOf(8,12,3,14),desc:'크게 점프해서 멀리 있는 적을 내리찍는 범위 공격. 추가 데미지를 줄 수 있는 속성의 적을 맞히면 3초 동안 느리게 만들어요.',
   f2:{name:'황소두꺼비',cost:2500,grid:deco(FROG,['crown','wings','spikes']),col:'#2e8b2e',acc:'#ffe27a',aura:'#ffe27a'}}),
 // ── EX (각 장의 마지막 보스를 쓰러뜨리면 획득)
-U({id:'fist',name:'격투가 강철',grid:FIGHT,s:4,hp:700,atk:30,range:44,speed:40,cd:.7,cost:350,cool:14,kb:3,area:true,an:'burst',col:'#d89a68',acc:'#e0402a',t:'EX',ty:['무속성'],trn:trnOf(8,10,6),desc:'1장 보스 격투왕 강철을 쓰러뜨리고 얻은 EX 캐릭터. 빠른 주먹으로 주변을 한꺼번에 때려요. (보스보다는 약해요)',
+U({id:'fist',name:'격투가 강철',grid:FIGHT,s:4,hp:700,atk:30,range:44,speed:40,cd:.7,cost:3000,cool:14,kb:3,area:true,an:'burst',col:'#d89a68',acc:'#e0402a',t:'EX',ty:['무속성'],trn:trnOf(8,10,6),desc:'1장 보스 격투왕 강철을 쓰러뜨리고 얻은 EX 캐릭터. 빠른 주먹으로 주변을 한꺼번에 때려요. (보스보다는 약해요)',
   f2:{name:'격투왕 강철',grid:deco(FIGHT,['armor','flame']),col:'#c07a4a',acc:'#ff4a2a',aura:'#ff9a5a'}}),
-U({id:'cornbar',name:'옥수수익어가는바',grid:CORN_EX,s:5,hp:430,atk:58,range:185,speed:31,cd:3.5,cost:900,cool:24,kb:3,area:true,an:'beam',col:'#f0c837',acc:'#fff4a8',t:'EX',ty:['부유'],pal:{Y:'#f3c52e',W:'#6f9e35',C:'#fff1a0'},freezeStrong:0.35,freezeTime:2,trn:trnOf(7,10,6),desc:'세계편 2장 클리어 보상. 범위 공격으로 강한 속성의 적을 35% 확률로 2초간 정지시키는 EX 유닛. 공격 속도가 느리고 사거리는 보스보다 짧아요.'}),
-U({id:'healthytooth',name:'건치',grid:TOOTH_EX,s:5,hp:740,atk:64,range:245,speed:43,cd:2.5,cost:1250,cool:29,kb:3,area:true,an:'burst',col:'#e3f7ff',acc:'#6ac6ef',t:'EX',ty:['천사'],pal:{W:'#ffffff'},trn:trnOf(8,10,7),desc:'세계편 3장 클리어 보상. 건강한 치아 건치! 꽤 긴 사거리와 범위 공격, 준수한 이동속도를 가졌지만 공격 간격이 길어요.'})
+U({id:'cornbar',name:'옥수수익어가는바',grid:CORN_EX,s:5,hp:430,atk:58,range:185,speed:31,cd:3.5,cost:900,cool:24,kb:3,area:true,an:'beam',col:'#f0c837',acc:'#fff4a8',t:'EX',ty:['무속성'],pal:{Y:'#f3c52e',W:'#6f9e35',C:'#fff1a0'},freezeNeutral:0.35,freezeTime:2,trn:trnOf(7,10,6),desc:'세계편 2장 클리어 보상. 무속성 적에게만 35% 확률로 2초간 정지. 범위 공격, 느린 공격 속도, 보스보다 짧은 사거리.'}),
+U({id:'healthytooth',name:'건치',grid:TOOTH_EX,s:4,hp:1850,atk:155,range:295,speed:50,cd:2.4,cost:4000/1.5,cool:26,kb:4,area:true,an:'burst',col:'#e3f7ff',acc:'#6ac6ef',t:'EX',ty:['천사'],pal:{W:'#ffffff'},trn:trnOf(8,10,7),desc:'세계편 3장 클리어 보상. 거대한 이빨을 가진 상어 건치! 높은 체력과 공격력, 장거리 범위 공격. 이동은 준수하고 공격 간격은 조금 길어요.'})
 ];
 const ATKM=2.5; // 공격력 전체 상향 (전투가 너무 길어서 아군·적 모두 ×2.5)
 MY.forEach(u=>{u.atk*=ATKM;});
@@ -630,8 +679,8 @@ const TR_ITEMS={
 '에일리언':['우주 칩','외계 젤리','별가루 병','안테나 모자'],'좀비':['마늘 목걸이','해독 약병','십자 말뚝','묘지 랜턴'],
 '고대종':['화석 방패','호박 구슬','토기 조각','상형문자 석판'],'악마':['성수 한 방울','봉인 부적','은 십자가','악몽 퇴치 베개']};
 const TSETS=[
-{id:'wal',name:'건우 금고 세트',eff:'최대 돈 +50%',items:['녹슨 동전 주머니','건우 저금통','황금 지갑','무한 금고 열쇠']},
-{id:'rate',name:'일꾼 건우 세트',eff:'돈 수입 속도 +30%',items:['건우 작업 장갑','에너지 음료','초시계','황금 곡괭이']}
+{id:'wal',name:'건우 금고 세트',eff:'최대 돈 증가',items:['녹슨 동전 주머니','건우 저금통','황금 지갑','무한 금고 열쇠']},
+{id:'rate',name:'일꾼 건우 세트',eff:'돈 수입 속도 증가',items:['건우 작업 장갑','에너지 음료','초시계','황금 곡괭이']}
 ].concat(TRAITS.map(t=>({id:'tr_'+t,trait:t,name:t+' 수호 세트',eff:t+' 적의 모든 공격 피해 감소 · 그 속성 적에게 주는 피해 증가 (3개 장 12개 완성 시 받는 피해 −50% / 주는 피해 +50%)',items:TR_ITEMS[t]})));
 const ALLT=TSETS.flatMap(s=>s.items);
 const TREASURE_PER_CHAPTER=ALLT.length;
@@ -651,9 +700,9 @@ const treasureIncomingMult=(traits,progresses)=>1-0.5*traitProgressFor(traits,pr
 const treasureOutgoingMult=(traits,progresses)=>1+0.5*traitProgressFor(traits,progresses);
 const basicProgress=(key)=>Math.min(1,(basicLv[key]||1)/20);
 const walletCapacity=()=>Math.round(600+(6000-600)*(economicProgress(0)+basicProgress('wallet'))/2);
-const incomeMultiplier=()=>1+1.8*(economicProgress(1)+basicProgress('worker'))/2;
-const researchMultiplier=()=>1-0.65*basicProgress('research');
-const unitCooldown=u=>basicLv.research>=20&&['junchi','gtong'].includes(u.id)?1.75:u.cool*researchMultiplier();
+const incomeMultiplier=()=>1+3.2*(economicProgress(1)+basicProgress('worker'))/2;
+const researchMultiplier=()=>1-0.75*basicProgress('research');
+const unitCooldown=u=>basicLv.research>=20&&['junchi','gtong'].includes(u.id)?1.15:Math.max(0.8,u.cool*researchMultiplier());
 
 
 // ════════ 적 ════════
@@ -666,13 +715,13 @@ Z:['Sir Seal',500,20,20,26,'#aab7c4',4,'r','#ffffff'],L:["Le'boin",700,26,16,28,
 Q:['Squire Rel',900,25,28,26,'#9a6a3a',5,'e','#e8c89a'],M:['Mooth',2000,50,12,34,'#8e44ad',5,'p','#f0e0ff'],N:['One Horn',1500,40,14,32,'#d35400',6,'h','#ffffff'],
 X:['Teacher Bear',2500,60,12,34,'#6b4a2f',5,'w','#d9b38c'],U:['B.B.Bunny',700,22,26,26,'#f7c6d9',5,'p','#ffffff'],
 F:['격투왕 강철',6000,120,16,40,'#d89a68',6,'f','#d8301a'],Y:['Teacher Bun Bun',4000,90,38,30,'#f7c6d9',6,'p','#cc3355'],
-O:['옥수수익어가는바',4600,65,15,230,'#f0c837',6,'r','#fff4a8'],C:['건치',9200,47,33,105,'#e3f7ff',8,'w','#66cbf2']};
+O:['옥수수익어가는바',4600,65,15,230,'#f0c837',4,'r','#fff4a8'],C:['건치',9200,47,33,105,'#e3f7ff',6,'w','#66cbf2']};
 // 보상 / 속성 / 공격 모션 / 범위 공격 여부 (몇몇은 개체 공격)
 const ENR={D:3,S:3,T:2,H:15,P:6,J:6,G:12,B:6,R:10,Z:12,L:16,K:18,Q:20,M:40,N:35,X:50,U:14,F:200,Y:150,O:240,C:330};
-const ENTY={D:['무속성'],S:['무속성'],T:['무속성'],H:['무속성'],P:['레드'],J:['무속성'],G:['무속성'],B:['무속성'],R:['무속성'],Z:['레드'],L:['무속성'],K:['무속성'],Q:['무속성'],M:['부유'],N:['레드'],X:['무속성'],U:['레드'],F:['무속성'],Y:['부유'],O:['레드'],C:['무속성']};
+const ENTY={D:['무속성'],S:['무속성'],T:['무속성'],H:['무속성'],P:['레드'],J:['무속성'],G:['무속성'],B:['무속성'],R:['무속성'],Z:['레드'],L:['무속성'],K:['무속성'],Q:['무속성'],M:['부유'],N:['레드'],X:['무속성'],U:['레드'],F:['무속성'],Y:['부유'],O:['무속성'],C:['무속성']};
 const ENAN={D:'claw',S:'claw',T:'slash',H:'smash',P:'slash',J:'slash',G:'smash',B:'slash',R:'claw',Z:'slash',L:'smash',K:'claw',Q:'claw',M:'slash',N:'smash',X:'smash',U:'slash',F:'burst',Y:'claw',O:'beam',C:'smash'};
 const ENAR='HGLKNMXUYFROC';
-const EN_SPECIAL={O:{slow:2,description:'사거리 230 · 느린 공격 · 공격에 맞은 아군을 2초 동안 느리게'},C:{description:'큰 몸집 · 빠른 공격 · 높은 체력'}};
+const EN_SPECIAL={O:{slow:2,description:'무속성 · 사거리 230 · 느린 공격 · 공격에 맞은 아군을 2초 동안 강하게 느리게'},C:{description:'무속성 · 거대한 상어 형태 · 빠른 공격 · 높은 체력'}};
 // 원작 기준 일반 속성: Snache, Hippoe, Jackie Peng, Gory, Croco, Le'boin, Kang Roo, Squire Rel, Teacher Bear 등은 무속성. Sir Seal과 B.B.Bunny는 빨간 적.
 // 세계편에서는 미래편/레전드 전용 속성을 적에게 부여하지 않음.
 const BOSS_HP_FACTOR=0.72,BOSS_ATK_FACTOR=0.72,ENEMY_HP_NERF=0.78,ENEMY_ATK_NERF=0.72;
@@ -711,15 +760,15 @@ const FB={
   appId:"1:761839681560:web:d4a0c2ad9607feb948036d"
 };
 let basicLv={wallet:1,worker:1,research:1,accounting:1,baseHp:1,cannon:1},upCategory='N',treasureChapter=0;
-let UID='guest',user=null,cleared={},trc={},lv={},xp=0,tk=2,em=0,rt=1,own={},fsel={},tn={},form=[],qc={},qs={wins:0,kills:0,cn:0,wk:1,ga:0},seenEnemies={},daily={last:'',streak:0,total:0,history:[]},CH=0;
+let UID='guest',user=null,cleared={},trc={},lv={},plusLv={},xp=0,tk=2,em=0,rt=1,own={},fsel={},tn={},form=[],qc={},qs={wins:0,kills:0,cn:0,wk:1,ga:0},seenEnemies={},daily={last:'',streak:0,total:0,history:[]},CH=0;
 const K=k=>k+(UID==='guest'?'':'@'+UID); // 게스트는 예전 저장 키를 그대로 사용
 const ck=i=>CH*100+i; // 클리어 기록 키: 1장 0~47, 2장 100~147, 3장 200~247
-const snap=()=>({clear:cleared,trc,lv,xp,meta:{tk,em,rt,own,fsel,tn,form,qc,qs,basicLv,seenEnemies,daily}});
+const snap=()=>({clear:cleared,trc,lv,xp,meta:{tk,em,rt,own,fsel,plusLv,tn,form,qc,qs,basicLv,seenEnemies,daily}});
 function grantClearedRewards(){if(cleared[47])own.fist=1;if(cleared[147])own.cornbar=1;if(cleared[247])own.healthytooth=1;}
 function applyData(d){const m=d.meta||{};cleared=d.clear||{};trc=d.trc||{};
   // 기존 단일 보물 저장을 1장 보물로 이관 (로그인 계정별 저장 호환)
   for(const item of ALLT)if(trc[item]&&!trc[treasureKey(0,item)])trc[treasureKey(0,item)]=1;
-  for(const item of ALLT)delete trc[item];lv=d.lv||{};xp=+d.xp||0;
+  for(const item of ALLT)delete trc[item];lv=d.lv||{};plusLv=m.plusLv||{};xp=+d.xp||0;
   basicLv=Object.assign({wallet:1,worker:1,research:1,accounting:1,baseHp:1,cannon:1},m.basicLv||{});
   tk=m.tk===undefined?2:+m.tk||0;em=+m.em||0;rt=m.rt===undefined?1:+m.rt||0;own=m.own||{};fsel=m.fsel||{};tn=m.tn||{};form=Array.isArray(m.form)?m.form:[];qc=m.qc||{};
   qs=Object.assign({wins:0,kills:0,cn:0,wk:1,ga:0},m.qs||{});seenEnemies=m.seenEnemies||{};daily=Object.assign({last:'',streak:0,total:0,history:[]},m.daily||{});grantClearedRewards();}
@@ -772,9 +821,9 @@ function buildDex(){
   const box=$('dexList');box.innerHTML='';
   codes.forEach(code=>{
     const e=EN[code],known=!!seenEnemies[code],bt=document.createElement('button');bt.className='dex-item';
-    const cv=document.createElement('canvas'),scale=3,grid=TPL[e[7]];
+    const cv=document.createElement('canvas'),scale=code==='O'||code==='C'?2:3,grid=code==='O'?CORN_EX:code==='C'?TOOTH_EX:TPL[e[7]];
     cv.width=Math.max(...grid.map(row=>row.length))*scale;cv.height=grid.length*scale;
-    if(known){spr(grid,0,0,scale,false,cp(e[5],e[8]),cv.getContext('2d'));}else{const ctx=cv.getContext('2d');ctx.font='bold 26px sans-serif';ctx.fillStyle='#99a6ba';ctx.fillText('?',cv.width/2-7,cv.height/2+9);}
+    if(known){spr(grid,0,0,scale,false,code==='O'?pl(MY.find(u=>u.id==='cornbar')):code==='C'?pl(MY.find(u=>u.id==='healthytooth')):cp(e[5],e[8]),cv.getContext('2d'));}else{const ctx=cv.getContext('2d');ctx.font='bold 26px sans-serif';ctx.fillStyle='#99a6ba';ctx.fillText('?',cv.width/2-7,cv.height/2+9);}
     const span=document.createElement('span');span.innerHTML='<b>'+(known?e[0]:'???')+'</b><small>'+(known?(ENTY[code].join(' / ')+' · '+(code==='F'?'세계편 1장 보스':code==='O'?'세계편 2장 보스':code==='C'?'세계편 3장 보스':'적 캐릭터')):'아직 발견하지 못한 적')+'</small>';
     bt.append(cv,span);box.appendChild(bt);
     if(known){bt.onclick=()=>{const old=box.querySelector('.dex-detail');if(old)old.remove();if(bt.dataset.open==='1'){bt.dataset.open='';return;}box.querySelectorAll('.dex-item').forEach(x=>x.dataset.open='');bt.dataset.open='1';const d=document.createElement('div');d.className='dex-detail';const sp=EN_SPECIAL[code];d.innerHTML='<b>'+e[0]+'</b><p>속성: '+ENTY[code].join(' / ')+'<br>기본 체력: '+e[1].toLocaleString()+' · 기본 공격력: '+Math.round(e[2]).toLocaleString()+'<br>이동속도: '+e[3]+' · 기본 사거리: '+e[4]+'<br>공격 범위: '+(ENAR.includes(code)?'범위 공격':'단일 공격')+'<br>처치 시 기본 보상: '+ENR[code]+'원'+(sp?'<br>특수 효과: '+sp.description:'')+'</p><small>실제 전투 능력치는 장·스테이지 배율과 보스 보정에 따라 달라집니다.</small>';bt.after(d);};}
@@ -798,12 +847,9 @@ $('backStart').onclick=()=>{buildWorld();show('world');};
 
 // ════════ 스테이지 선택 / 보물 ════════
 
-function countryMark(index){
-  // 실제 지도 데이터 대신 국가별로 다른 불규칙 외곽선을 그리는 작은 도트맵 배지
-  let seed=(index+17)*7919;const rnd=()=>{seed=(seed*9301+49297)%233280;return seed/233280;};
-  const n=8+index%4,pts=[];for(let j=0;j<n;j++){const a=-Math.PI/2+j*2*Math.PI/n,r=10+rnd()*4;pts.push((18+Math.cos(a)*r).toFixed(1)+','+(18+Math.sin(a)*r*1.25).toFixed(1));}
-  return '<svg class="country-mark" viewBox="0 0 36 36" aria-hidden="true"><polygon points="'+pts.join(' ')+'"/></svg>';
-}
+const STAGE_FLAGS=['🇰🇷','🇲🇳','🇨🇳','🇹🇭','🇰🇭','🇵🇭','🇯🇵','🇦🇺','🇸🇬','🇲🇻','🇮🇳','🇳🇵','🇦🇪','🇸🇦','🇰🇪','🇲🇬','🇿🇦','🇬🇭','🏜️','🇪🇬','🇹🇷','🇷🇺','🇬🇷','🇮🇹','🇲🇨','🇪🇸','🇫🇷','🇩🇪','🇩🇰','🇳🇴','🇬🇧','🇬🇱','🇨🇦','🗽','🇧🇲','🇯🇲','🇨🇴','🇧🇷','🇦🇷','🇵🇪','🗿','🇲🇽','🚀','🇺🇸','🎬','🏔️','🌺','🌕'];
+function stageFlag(i){return STAGE_FLAGS[i]||'🌍';}
+
 function buildGrid(){
   $('cur').textContent='👤'+(user?user.name:'게스트')+'  🎫'+tk+' 🌟'+rt+' 💎'+em;
   const tb=$('chtab');tb.innerHTML='';
@@ -811,7 +857,7 @@ function buildGrid(){
     b.textContent=(lk?'🔒 ':'')+(c+1)+'장 (적 ×'+CHM[c]+')';b.disabled=lk;if(c===CH)b.className='on';b.onclick=()=>{CH=c;buildGrid();};tb.appendChild(b);});
   const gr=$('grid');gr.innerHTML='';
   STS[CH].forEach((s,i)=>{const b=document.createElement('button'),lock=i>0&&!cleared[ck(i-1)];if(cleared[ck(i)])b.className='cl';
-    b.title=s[0];b.innerHTML='<b>'+(i+1)+'</b>'+countryMark(i)+(lock?'🔒':(cleared[ck(i)]?'✓':''))+(stageTreasure(CH,i).some(t=>hasTreasure(CH,t))?'<span class="tre-badge" title="보물 획득">★</span>':'');b.disabled=lock;b.onclick=()=>startStage(i);gr.appendChild(b);});
+    b.title=s[0];b.innerHTML='<b>'+(i+1)+'</b><span class="stage-flag">'+stageFlag(i)+'</span><span class="stage-name">'+s[0]+'</span>'+(lock?'<span class="stage-ok">🔒</span>':(cleared[ck(i)]?'<span class="stage-ok">✓</span>':''))+(stageTreasure(CH,i).some(t=>hasTreasure(CH,t))?'<span class="tre-badge" title="보물 획득">★</span>':'');b.disabled=lock;b.onclick=()=>startStage(i);gr.appendChild(b);});
 }
 const tdone=s=>setDone(CH,s);
 function buildTr(){
@@ -820,29 +866,31 @@ function buildTr(){
     const got=treasureCount(treasureChapter,set.items),done=got===set.items.length;
     return '<div class="tr"><b>'+set.name+'</b> '+(done?'<span style="color:#1d7a2a;font-weight:900">✔ 올보물</span>':'<small>('+got+' / 4)</small>')+'<br><small>'+set.eff+'</small><br>'+set.items.map(item=>'<button type="button" class="tit treasure-jump'+(hasTreasure(treasureChapter,item)?' on':'')+'" data-stage="'+treasureStage(item)+'" title="해당 스테이지로 이동">'+(hasTreasure(treasureChapter,item)?item:'???')+'</button>').join('')+'</div>';}).join('');
   [0,1,2].forEach(ch=>{const b=document.createElement('button');b.textContent=(ch+1)+'장';b.className=ch===treasureChapter?'on':'';b.onclick=()=>{treasureChapter=ch;buildTr();};$('treTabs').appendChild(b);});
-  $('trl').querySelectorAll('.treasure-jump').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.stage;CH=treasureChapter;show('select');buildGrid();if(i>0&&!cleared[CH*100+i-1]){toast('이전 스테이지를 먼저 클리어하세요');return;}startStage(i);}));
+  $('trl').querySelectorAll('.treasure-jump').forEach(b=>b.addEventListener('click',()=>{const i=+b.dataset.stage,ch=treasureChapter;if(ch>0&&!cleared[(ch-1)*100+47]){toast(ch+'장을 클리어하지 않아 '+(ch+1)+'장 스테이지가 잠겨 있어요.');return;}if(i>0&&!cleared[ch*100+i-1]){toast('아직 열리지 않은 스테이지예요. 이전 스테이지를 먼저 클리어하세요.');return;}CH=ch;buildGrid();show('select');startStage(i);}));
 }
 
 let SL=[],gres=null;
-const lvCap=()=>Infinity; // 캐릭터 레벨은 중복 뽑기로 계속 올릴 수 있으며 상한이 없습니다.
+const lvCap=()=>cleared[247]?30:cleared[147]?20:10; // XP 레벨 상한, +레벨은 무제한
 const lvCost=(u,L)=>Math.round(120*L*(0.7+0.3*L)*TM[u.t]/10)*10;
 const avail=u=>u.t==='N'?(u.unlock==null||!!cleared[u.unlock]||!!own[u.id]):!!own[u.id];
 const lockTxt=u=>u.t==='N'?(u.unlock+1)+'번 맵 클리어 또는 일반 뽑기':u.t==='EX'?({'fist':'1','cornbar':'2','healthytooth':'3'}[u.id]||'1')+'장 마지막 스테이지 보스를 쓰러뜨리면 획득':'레어 뽑기에서만 획득';
-const f2on=id=>{const u=MY.find(x=>x.id===id);return !!(u&&u.f2&&(lv[id]||1)>=10&&fsel[id]!==1);};
-const lm=id=>(1+0.1*((lv[id]||1)-1))*(f2on(id)?1.25:1);
-const fm=u=>f2on(u.id)?Object.assign({},u,u.f2,{f:1,s:u.s}):u; // Lv10 폼체인지 (1형/2형 선택, 크기는 그대로)
+const totalLevel=id=>(lv[id]||1)+(plusLv[id]||0);
+const evolveLevel=u=>u.t==='N'?30:10;
+const f2on=id=>{const u=MY.find(x=>x.id===id);return !!(u&&u.f2&&totalLevel(id)>=evolveLevel(u)&&fsel[id]!==1);};
+const lm=id=>(1+0.1*(totalLevel(id)-1))*(f2on(id)?1.25:1);
+const fm=u=>f2on(u.id)?Object.assign({},u,u.f2,{f:1,s:u.s}):u; // 기본캐릭터는 총합 Lv30, 나머지는 총합 Lv10 폼 체인지
 const tnm=(id,k)=>1+0.05*((tn[id]||{})[k]||0);
 const fl=()=>(form.length?form:MY.map(u=>u.id)).filter(id=>{const u=MY.find(x=>x.id===id);return u&&avail(u);}).slice(0,10);
 function ico(u){const v=fm(u),cv=document.createElement('canvas');cv.className='ic';cv.width=Math.max(...v.grid.map(r=>r.length))*v.s;cv.height=v.grid.length*v.s;spr(v.grid,0,0,v.s,false,pl(v),cv.getContext('2d'));return cv;}
 function tbadge(ty){return ty.map(t=>'<span class="tag" style="background:'+TCOL[t]+(t==='블랙'||t==='악마'?';color:#fff':'')+'">'+t+'</span>').join('');}
 const tier=u=>'<span class="tag" style="background:'+TIERC[u.t]+'">'+TIERN[u.t]+'</span>';
 $('goForm').onclick=()=>{buildForm();show('form');};
-$('goGa').onclick=()=>{if(gres&&gres.dup&&!gres.done){xp+=DXP[gres.u.t];save();}gres=null;gst={mode:'idle',t0:0,kind:'n'};show('gacha');buildGa();gStart();};
+$('goGa').onclick=()=>{gres=null;gst={mode:'idle',t0:0,kind:'n'};show('gacha');buildGa();gStart();};
 $('goQ').onclick=()=>{buildQ();show('quest');};
 document.querySelectorAll('.bk').forEach(b=>b.onclick=()=>{buildGrid();show('select');});
 function buildForm(){const f=fl(),box=$('forml');box.innerHTML='';$('fc').textContent=f.length+'/10';
   MY.forEach(u=>{const d=document.createElement('div');d.className='tr up';d.appendChild(ico(u));const i=document.createElement('div'),k=f.indexOf(u.id);
-    i.innerHTML='<b>'+fm(u).name+'</b> Lv'+(lv[u.id]||1)+' '+tier(u)+tbadge(u.ty)+'<br><small>'+(!avail(u)?'🔒 '+lockTxt(u):k>=0?'편성 '+(k+1)+'번 슬롯':'미편성')+'</small>';
+    i.innerHTML='<b>'+fm(u).name+'</b> Lv'+(lv[u.id]||1)+(plusLv[u.id]?'<span class="unit-plus"> +'+plusLv[u.id]+'</span>':'')+' '+tier(u)+tbadge(u.ty)+'<br><small>'+(!avail(u)?'🔒 '+lockTxt(u):k>=0?'편성 '+(k+1)+'번 슬롯':'미편성')+'</small>';
     if(avail(u)){const b=document.createElement('button');b.style.marginTop='6px';b.textContent=k>=0?'해제':'편성';
       b.onclick=()=>{const a=fl().slice(),j=a.indexOf(u.id);if(j>=0){if(a.length>1)a.splice(j,1);}else if(a.length<10)a.push(u.id);form=a;save();buildForm();};i.appendChild(b);}
     d.appendChild(i);box.appendChild(d);});}
@@ -890,14 +938,13 @@ function buildGa(){
   const p=$('gp');p.innerHTML='';const busy=!!(gres&&gres.anim),pend=!!(gres&&gres.dup&&!gres.done);
   const msg=document.createElement('div');msg.style.cssText='min-height:22px;font-size:.9rem';
   if(busy)msg.textContent='뽑는 중…';
-  else if(gres)msg.innerHTML='<b>'+fm(gres.u).name+'</b> 획득! <small>'+(gres.dup?('중복 획득 +1 · '+(gres.done||'레벨 +1 또는 XP 보상 선택')):'새 캐릭터를 얻었어요!')+'</small>';
+  else if(gres)msg.innerHTML='<b>'+fm(gres.u).name+'</b> 획득! <small>'+(gres.dup?('중복 획득 '+gres.done+' · XP 레벨과 별도'):'새 캐릭터를 얻었어요!')+'</small>';
   else msg.innerHTML='<small>일반 뽑기: 일반 캐릭터 · 레어 뽑기: 레어 70% / 슈퍼 레어 25% / 울트라 슈퍼 레어 5%</small>';
   p.appendChild(msg);
   const row=document.createElement('div');row.className='nav';
   const mk=(t,fn,dis)=>{const b=document.createElement('button');b.textContent=t;b.disabled=!!dis;b.onclick=fn;row.appendChild(b);};
-  if(pend&&!busy){const L=lv[gres.u.id]||1,dxp=DXP[gres.u.t];
-    mk('+1 레벨',()=>{lv[gres.u.id]=L+1;gres.done='중복 캐릭터 +1! (Lv'+(L+1)+')';save();buildGa();},false);
-    mk('XP +'+dxp.toLocaleString(),()=>{xp+=dxp;gres.done='XP +'+dxp.toLocaleString()+' 획득!';save();buildGa();});
+  if(pend&&!busy){const next=(plusLv[gres.u.id]||0)+1;
+    mk('중복 강화 +'+next+' 받기',()=>{plusLv[gres.u.id]=next;gres.done='+'+next+' 적용! (XP Lv'+(lv[gres.u.id]||1)+'과 별도)';save();buildGa();},false);
     p.appendChild(row);return;}
   const lock=busy||pend;
   mk('일반 뽑기 (🎫1)',()=>pull('n'),lock||tk<1);
@@ -912,8 +959,9 @@ function pull(kind){
   qs.ga++;
   let pool;if(kind==='r'){const x=Math.random();pool=MY.filter(u=>u.t===(x<0.05?'UR':x<0.30?'SR':'R'));}else pool=MY.filter(u=>u.t==='N');
   const u=pool[Math.floor(Math.random()*pool.length)],dup=avail(u);
-  if(!dup)own[u.id]=1;
-  gres={u,dup,anim:1,kind};gst={mode:'anim',t0:performance.now(),kind};save();sfx('gacha',kind==='r');buildGa();gStart();}
+  if(dup)plusLv[u.id]=(plusLv[u.id]||0)+1;
+  else own[u.id]=1;
+  gres={u,dup,done:dup?'+'+plusLv[u.id]+' 강화 적용!':null,anim:1,kind};gst={mode:'anim',t0:performance.now(),kind};save();sfx('gacha',kind==='r');buildGa();gStart();}
 
 // ════════ 퀘스트 / 시작 화면 ════════
 const QS=[['q1','첫 승리',()=>qs.wins,1,'t',1],['q2','맵 5개 클리어',()=>Object.keys(cleared).length,5,'e',30],['q3','적 100마리 처치',()=>qs.kills,100,'e',20],['q4','쓰레기포 10번 발사',()=>qs.cn,10,'t',1],['q5','도령 Lv5 달성 (한 판)',()=>qs.wk,5,'e',20],['q6','캐릭터 Lv10 달성',()=>Math.max(1,...MY.map(u=>lv[u.id]||1)),10,'t',2],['q7','맵 15개 클리어',()=>Object.keys(cleared).length,15,'t',2],['q8','적 1000마리 처치',()=>qs.kills,1000,'e',60],['q9','뽑기 10번',()=>qs.ga,10,'e',40],['q10','맵 30개 클리어',()=>Object.keys(cleared).length,30,'t',3]];
@@ -964,28 +1012,28 @@ function buildUp(){
   const tabs=document.createElement('div');tabs.className='chtab';[['N','기본'],['EX','EX'],['R','레어'],['SR','슈퍼 레어'],['UR','울트라 슈퍼 레어']].forEach(([key,name])=>{const b=document.createElement('button');b.textContent=name;b.className=upCategory===key?'on':'';b.onclick=()=>{upCategory=key;buildUp();};tabs.appendChild(b);});box.appendChild(tabs);
   if(upCategory==='N')buildBasicUp(box);
   MY.filter(u=>u.t===upCategory).forEach(u0=>{
-    const u=fm(u0),L=lv[u.id]||1,m=lm(u.id),cost=lvCost(u0,L),d=document.createElement('div');d.className='tr up';
+    const u=fm(u0),L=lv[u.id]||1,bonus=plusLv[u.id]||0,total=L+bonus,m=lm(u.id),cost=lvCost(u0,L),d=document.createElement('div');d.className='tr up';
     const cv=document.createElement('canvas');cv.className='ic';cv.width=Math.max(...u.grid.map(r=>r.length))*u.s;cv.height=u.grid.length*u.s;
     spr(u.grid,0,0,u.s,false,pl(u),cv.getContext('2d'));
     const info=document.createElement('div'),at=u.ty[0],id=u.id;
     const wk=TRAITS.filter(a=>tmul(a,u.ty)>1),rs=TRAITS.filter(a=>tmul(a,u.ty)<1);
-    info.innerHTML='<b>'+u.name+(u.f?' ★':'')+' Lv'+L+'</b> '+tier(u0)+tbadge(u.ty)+' <small>['+(u.area?'범위':'단일')+' 공격]</small>'
+    info.innerHTML='<b>'+u.name+(u.f?' ★':'')+' Lv'+L+(bonus?'<span class="unit-plus"> +'+bonus+'</span>':'')+'</b> '+tier(u0)+tbadge(u.ty)+' <small>['+(u.area?'범위':'단일')+' 공격]</small>'
       +'<br><small>'+u0.desc+'</small>'
       +'<br><small>체력 '+Math.round(u.hp*m*tnm(id,'hp'))+' · 공격력 '+(u.atk*m*tnm(id,'atk')).toFixed(1)+' · DPS '+(u.atk*m*tnm(id,'atk')/u.cd).toFixed(1)+' · 사거리 '+u.range+(u.minR?'(최소 '+u.minR+')':'')+' · 이동속도 '+Math.round(u.speed*tnm(id,'spd'))
-      +'<br>생산 비용 '+u.cost+'원 · 쿨타임 '+unitCooldown(u).toFixed(1)+'초 · 히트백 '+u.kb+'회</small>'
+      +'<br>생산 비용 (세계편 2장 기준) '+Math.round(u.cost*CHC[1]).toLocaleString()+'원 · 쿨타임 '+unitCooldown(u).toFixed(1)+'초 · 히트백 '+u.kb+'회</small>'
       +'<br><small>굉장함(×2) → '+(STR[at].join('·')||'없음')+' 속성의 적 · 받는 피해 반감(×0.5) → '+RES[u.ty[0]].join('·')+' 속성의 공격'
       +'<br>이 캐릭터에게 굉장함인 적 속성: '+(wk.join('·')||'없음')+'</small>';
-    if(u0.f2)info.innerHTML+=L>=10?'<br><small>폼 체인지 가능: 1형 '+u0.name+' / 2형 '+u0.f2.name+' (2형은 스탯 ×1.25, 크기 변화 없음) · 지금 '+(u.f?'2형':'1형')+'</small>'
-      :'<br><small>Lv10 폼 체인지 → '+u0.f2.name+' (스탯 ×1.25, 겉모습도 크게 바뀌어요)</small>';
+    if(u0.f2)info.innerHTML+=total>=evolveLevel(u0)?'<br><small>폼 체인지 가능 (XP Lv + 중복 +레벨 = '+total+'): 1형 '+u0.name+' / 2형 '+u0.f2.name+' · 지금 '+(u.f?'2형':'1형')+'</small>'
+       :'<br><small>총합 Lv'+evolveLevel(u0)+' 진화 → '+u0.f2.name+' (현재 '+total+' / '+evolveLevel(u0)+', XP Lv와 +레벨 합산)</small>';
     if(!avail(u0))info.innerHTML+='<br>🔒 '+lockTxt(u0);
     else{const cap=lvCap(),row=document.createElement('div');row.style.cssText='margin-top:6px;display:flex;gap:6px;flex-wrap:wrap';
       const b=document.createElement('button');b.textContent=L>=cap?(cap<30?'Lv'+cap+' 한계':'MAX'):'강화 ('+cost.toLocaleString()+' XP)';b.disabled=L>=cap||xp<cost;
       b.onclick=()=>{xp-=cost;lv[id]=L+1;save();rb();};row.appendChild(b);
-      if(u0.f2&&L>=10){const fb=document.createElement('button');fb.textContent=u.f?'1형으로 변경':'2형('+u0.f2.name+')으로 변경';fb.onclick=()=>{fsel[id]=u.f?1:2;save();rb();};row.appendChild(fb);}
+      if(u0.f2&&total>=evolveLevel(u0)){const fb=document.createElement('button');fb.textContent=u.f?'1형으로 변경':'2형('+u0.f2.name+')으로 변경';fb.onclick=()=>{fsel[id]=u.f?1:2;save();rb();};row.appendChild(fb);}
       info.appendChild(row);info.appendChild(trainUI(u0));}
     d.appendChild(cv);d.appendChild(info);box.appendChild(d);});
   const cap=lvCap();
-  box.insertAdjacentHTML('beforeend','<p><small>맵을 클리어하면 XP를 얻어요. 레벨당 체력·공격력 +10%.'+(cap<30?'<br>세계편 '+(cap===10?'2':'3')+'장을 클리어하면 Lv'+(cap+10)+'까지 올릴 수 있어요.':'')+'</small></p>');
+  box.insertAdjacentHTML('beforeend','<p><small>XP 레벨은 '+cap+'까지 강화할 수 있습니다. 중복 뽑기 +레벨은 별도로 무제한 누적됩니다. 기본 캐릭터는 XP Lv + 중복 +레벨이 30이 되면 다음 형태를 해금합니다.'+(cap<30?'<br>세계편 '+(cap===10?'2':'3')+'장을 클리어하면 XP Lv'+(cap+10)+'까지 해금됩니다.':'')+'</small></p>');
 }
 
 // 기본 능력: 세계편 2장 클리어 시 레벨 상한 20. 연구력은 생산 대기시간을 단축합니다.
@@ -997,7 +1045,7 @@ function buildBasicUp(box){
   const summary=document.createElement('div');summary.className='tr';summary.innerHTML='<b>현재 적용 수치</b><br><small>기본 지갑 '+walletCapacity().toLocaleString()+'원 / 목표 6,000원 · 돈 생산 배율 ×'+incomeMultiplier().toFixed(2)+' · 생산 쿨타임 ×'+researchMultiplier().toFixed(2)+'</small>';box.appendChild(summary);
 }
 // ════════ 전투: 도령 / 쓰레기포 / 슬롯 ════════
-function applyWk(){S.maxM=Math.round(walletCapacity()+(S.wl-1)*250*(1+economicProgress(0)));S.rate=14*(1+(S.wl-1)*0.3)*incomeMultiplier();}
+function applyWk(){S.maxM=Math.round(walletCapacity()+(S.wl-1)*250*(1+economicProgress(0)));S.rate=28*(1+(S.wl-1)*0.48)*incomeMultiplier();}
 function wkUp(){if(!S||S.over||S.paused||S.wl>=8)return;const c=Math.round(S.wl*80*(1-0.2*basicProgress('accounting')));if(S.money>=c){S.money-=c;S.wl++;qs.wk=Math.max(qs.wk,S.wl);applyWk();}}
 function fireCn(){ // 쓰레기포: 성과 가장 가까운 적에게 범위 타격
   if(!S||S.over||S.paused||S.cn<1)return;
@@ -1024,11 +1072,11 @@ function showUnitInfo(k){
   const atk=u.atk*m*tnm(base.id,'atk');
   const hp=u.hp*m*tnm(base.id,'hp');
   const portrait=$('unitInfoPortrait');portrait.replaceChildren(ico(base));
-  $('unitInfoName').innerHTML='<b>'+u.name+'</b><div>Lv'+(lv[base.id]||1)+' '+tier(base)+' '+traitTags(ty)+'</div>';
+  $('unitInfoName').innerHTML='<b>'+u.name+'</b><div>Lv'+(lv[base.id]||1)+(plusLv[base.id]?' <span class="unit-plus">+'+plusLv[base.id]+'</span>':'')+' '+tier(base)+' '+traitTags(ty)+'</div>';
   const special=[];
   special.push(u.area?'범위 공격: 사거리 안의 여러 적 공격':'단일 공격: 한 번에 적 하나 공격');
   if(u.leap)special.push('원거리 도약 공격: 가까운 적은 공격하지 못함 (최소 사거리 '+u.minR+')');
-  if(u.slowS)special.push('느리게: 강한 속성의 적에게 공격이 적중하면 3초 동안 이동·공격 속도 감소');if(u.freezeStrong)special.push('정지: 강한 속성의 적에게 '+Math.round(u.freezeStrong*100)+'% 확률로 '+u.freezeTime+'초 정지');
+  if(u.slowS)special.push('느리게: 강한 속성의 적에게 공격이 적중하면 3초 동안 이동·공격 속도 크게 감소');if(u.freezeStrong)special.push('정지: 강한 속성의 적에게 '+Math.round(u.freezeStrong*100)+'% 확률로 '+u.freezeTime+'초 정지');if(u.freezeNeutral)special.push('정지: 무속성 적에게만 '+Math.round(u.freezeNeutral*100)+'% 확률로 '+u.freezeTime+'초 정지');
   if(u.float)special.push('부유하는 외형 (추가 전투 보너스 없음)');
   const desc=(base.desc||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
   const body=$('unitInfoBody');
@@ -1100,7 +1148,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(tr
 function spawnMy(k){const T=fm(MY[k]),m=lm(T.id),h=T.hp*m*tnm(T.id,'hp');
   S.units.push({team:0,T:Object.assign({},T,{atk:T.atk*m*tnm(T.id,'atk'),speed:T.speed*tnm(T.id,'spd')}),x:W-80,hp:h,max:h,kbn:T.kb,nk:h-h/T.kb,t:0,kt:0,at:0,ph:Math.random()*3});}
 function spawnEn(code,boss){if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),h=e[1]*S.mult*ENM*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
-  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.8:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code]*(boss?2:1),an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
+  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code]*(boss?2:1),an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
   if(boss){sfx('boss');S.shake=0.7;S.bw=1.4;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}} // 보스 등장: 아군 전체가 와르르 밀려나요
 }
 function deploy(k){
@@ -1133,7 +1181,7 @@ function update(dt){
     S.bm.push({x:p.tx,t:0});}
   S.pj=S.pj.filter(p=>!p.done);S.bm.forEach(b=>b.t+=dt);S.bm=S.bm.filter(b=>b.t<0.5);
   for(const u of S.units){
-    const dir=u.team===0?-1:1,sf=u.sl>0?0.5:1;if(u.sl>0)u.sl=Math.max(0,u.sl-dt);if(u.fr>0){u.fr=Math.max(0,u.fr-dt);u.at=0;u.mv=0;continue;}u.t-=dt*sf;u.at=Math.max(0,u.at-dt);u.mv=0;if(u.hp<=0)continue;
+    const dir=u.team===0?-1:1,sf=u.sl>0?0.22:1;if(u.sl>0)u.sl=Math.max(0,u.sl-dt);if(u.fr>0){u.fr=Math.max(0,u.fr-dt);u.at=0;u.mv=0;continue;}u.t-=dt*sf;u.at=Math.max(0,u.at-dt);u.mv=0;if(u.hp<=0)continue;
     if(u.pend!=null){u.pend-=dt;if(u.pend<=0){u.pend=null;for(const o of S.units)if(o.team!==u.team&&o.hp>0&&Math.abs(o.x-u.tx)<=55){hitT(u,o,u.T.atk);if(o.hp>0&&o.kt<=0){o.kt=0.35;o.t=Math.max(o.t,0.6);}}if(u.bt){(u.team===0?S.en:S.my).hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);u.bt=0;}}}
     if(u.kt>0){u.kt-=dt;u.x=Math.max(60,Math.min(W-60,u.x-dir*(u.kv||160)*dt));if(u.kt<=0)u.kv=0;continue;}
     let target=null,best=1e9;
@@ -1187,11 +1235,11 @@ function hitT(a,o,d){
     S.pop.push({x:o.x,t:0,s:affinity>1?'효과 굉장!':'효과 별로…',c:affinity>1?'#ffe27a':'#9fb3c8'});
   if(affinity>1&&a.T.slowS)o.sl=3; // 황소개구리: 강한 속성의 적은 3초 슬로우
   if(a.T.slowOnHit)o.sl=Math.max(o.sl||0,a.T.slowOnHit); // 2장 보스: 맞은 아군은 누구든 느려짐
-  if(affinity>1&&a.T.freezeStrong&&Math.random()<a.T.freezeStrong){o.fr=Math.max(o.fr||0,a.T.freezeTime||2);if(!S.pop.some(p=>p.s==='정지!'&&p.t<0.2))S.pop.push({x:o.x,t:0,s:'정지!',c:'#9bdfff'});}
+  if(((affinity>1&&a.T.freezeStrong&&Math.random()<a.T.freezeStrong)||(a.T.freezeNeutral&&o.T.ty.includes('무속성')&&Math.random()<a.T.freezeNeutral))){o.fr=Math.max(o.fr||0,a.T.freezeTime||2);if(!S.pop.some(p=>p.s==='정지!'&&p.t<0.2))S.pop.push({x:o.x,t:0,s:'정지!',c:'#9bdfff'});}
 }
 function txt(t,x,y,size){g.font='bold '+size+'px sans-serif';g.textAlign='center';g.lineWidth=3;g.strokeStyle='#000a';g.strokeText(t,x,y);g.fillStyle='#fff';g.fillText(t,x,y);}
 function dsp(u,ft){
-  const T=u.T,grid=u.team===0?T.grid:TPL[T.tpl],s=T.s,h=grid.length*s,w=Math.max(...grid.map(r=>r.length))*s,dir=u.team===0?-1:1,an=T.an;
+  const T=u.T,grid=u.team===0?T.grid:u.code==='O'?CORN_EX:u.code==='C'?TOOTH_EX:TPL[T.tpl],s=T.s,h=grid.length*s,w=Math.max(...grid.map(r=>r.length))*s,dir=u.team===0?-1:1,an=T.an;
   let ox=0,oy=-(T.float?8:0),rot=0,al=1,sx=1,sy=1;
   if(ft>0){const p=ft/0.6;ox=-dir*p*110;oy=-Math.sin(p*Math.PI)*50+p*40;rot=-dir*p*3;al=1-p;} // 데스 모션
   else{
@@ -1250,8 +1298,8 @@ function dsp(u,ft){
   }
   if(u.team===0&&ft===0&&(T.f||T.glow)){g.save();g.globalAlpha=0.22+0.1*Math.sin(S.t*6);g.fillStyle=T.aura||'#ffd84a';g.beginPath();g.ellipse(u.x,GY-h/2+oy,w*0.75,h*0.7,0,0,7);g.fill();g.restore();}
   if(u.boss&&ft===0){g.save();g.globalAlpha=0.18+0.08*Math.sin(S.t*5);g.fillStyle='#ff3a2a';g.beginPath();g.ellipse(u.x,GY-h/2,w*0.8,h*0.75,0,0,7);g.fill();g.restore();}
-  g.save();g.globalAlpha=al;g.translate(u.x+ox,GY+oy);g.rotate(rot);g.scale(sx,sy);
-  const pal=u.team===1?(T._p||(T._p=cp(T.col,T.acc))):(T.gold?{B:'#c98a14',S:'hsl(46,100%,'+(58+12*Math.sin(S.t*6))+'%)',L:'hsl(50,100%,'+(80+10*Math.sin(S.t*6+1))+'%)'}:(T._p||(T._p=pl(T))));
+  g.save();if(ft===0){g.fillStyle='#1b140b55';g.beginPath();g.ellipse(u.x,GY+1,Math.max(12,w*.36),5,0,0,Math.PI*2);g.fill();}g.globalAlpha=al;g.translate(u.x+ox,GY+oy);g.rotate(rot);g.scale(sx,sy);
+  const pal=u.team===1?(u.code==='O'?pl(MY.find(z=>z.id==='cornbar')):u.code==='C'?pl(MY.find(z=>z.id==='healthytooth')):(T._p||(T._p=cp(T.col,T.acc)))):(T.gold?{B:'#c98a14',S:'hsl(46,100%,'+(58+12*Math.sin(S.t*6))+'%)',L:'hsl(50,100%,'+(80+10*Math.sin(S.t*6+1))+'%)'}:(T._p||(T._p=pl(T))));
   spr(grid,-w/2,-h,s,u.team===0,pal);
   g.restore();
   if(ft===0&&u.sl>0){g.save();g.globalAlpha=0.28;g.fillStyle='#4aa3ff';g.beginPath();g.ellipse(u.x,GY-h/2+oy,w*0.7,h*0.65,0,0,7);g.fill();g.restore();txt('느림',u.x,GY-h-18,10);}
