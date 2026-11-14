@@ -686,6 +686,7 @@ const TIERN={N:'일반',R:'레어',SR:'슈퍼 레어',UR:'울트라 슈퍼 레�
 const TIERC={N:'#d8e8ff',R:'#a8f0b8',SR:'#ffe27a',UR:'#ff9ae0',EX:'#ff9a6a'};
 const TM={N:1,R:1.5,SR:2,UR:3,EX:1.5};
 const DXP={N:600,R:1500,SR:3000,UR:6000,EX:2000};
+const WORLD_ENEMY_SCALE=1.4; // 세계편 1·2·3장 적 체력과 공격력에 동일 적용
 const CHM=[1,1.5,4],CHC=[1,1.5,2],ENM=1.25; // 냥코 원작 배율: 1장 100% · 2장 150% · 3장 400% (유닛 가격 ×1 / ×1.5 / ×2)
 
 // ════════ 보물: 고유 이름 48개 = 4개씩 12세트 ════════
@@ -1187,8 +1188,8 @@ $('exit').onclick=()=>{closeUnitInfo();cancelAnimationFrame(raf);S=null;$('pmenu
 document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(true);});
 function spawnMy(k){const T=fm(MY[k]),m=lm(T.id),h=T.hp*m*tnm(T.id,'hp');
   S.units.push({team:0,T:Object.assign({},T,{atk:T.atk*m*tnm(T.id,'atk'),speed:T.speed*tnm(T.id,'spd')}),x:W-80,hp:h,max:h,kbn:T.kb,nk:h-h/T.kb,t:0,kt:0,at:0,ph:Math.random()*3});}
-function spawnEn(code,boss){if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),h=e[1]*S.mult*ENM*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
-  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code]*(boss?2:1),an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
+function spawnEn(code,boss){if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),h=e[1]*S.mult*ENM*WORLD_ENEMY_SCALE*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
+  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*WORLD_ENEMY_SCALE*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code]*(boss?2:1),an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
   if(boss){sfx('boss');S.shake=0.7;S.bw=1.4;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}} // 보스 등장: 아군 전체가 와르르 밀려나요
 }
 function deploy(k){
