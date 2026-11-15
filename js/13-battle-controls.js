@@ -87,11 +87,11 @@ $('speedToggle').onclick=()=>{speedUp=!speedUp;renderSpeedToggle();};
 function startStage(i){
   if(i>0&&!cleared[ck(i-1)])return;
   stageIdx=i;$('unitInfoLayer').classList.add('hide');speedUp=false;renderSpeedToggle();const d=STS[CH][i];buildSlots();
-  const eh=Math.round((300+d[1]*0.1)*CHM[CH]);
+  const eh=Math.round((300+d[1]*0.1)*(CH>=3?1:CHM[CH])); // 미래편은 원작 성 체력이 장마다 이미 달라서 장 배율을 또 곱하지 않아요
   const tsd={};TSETS.forEach(set=>{if(set.trait)tsd[set.trait]=traitTreasureProgress(set.trait);});
   S={t:0,money:Math.min(100,walletCapacity()),units:[],cool:MY.map(()=>0),over:null,boss:false,drop:'',drop2:'',fx:[],pop:[],cn:0,cnr:60,lid:0,pj:[],bm:[],dust:[],spk:[],ring:[],shake:0,bw:0,
      walM:1,rateM:incomeMultiplier(),tsd,cm:CHC[CH],future:CH>=3,maxM:1000,rate:14,
-     my:{hp:1500*(1+basicProgress('baseHp')),max:1500*(1+basicProgress('baseHp'))},en:{hp:eh,max:eh},eSpawn:2,spawnN:0,mult:CHM[CH],wl:1};applyWk();
+     my:{hp:1500*(1+basicProgress('baseHp')),max:1500*(1+basicProgress('baseHp'))},en:{hp:eh,max:eh},eSpawn:2,spawnN:0,mags:(CH>=3&&d[4])?d[4].mags:null,fs:null,fb:null,mult:CHM[CH],wl:1};applyWk();
   $('stageTitle').textContent=(CH>=3?'미래편 ':'세계편 ')+(CH%3+1)+'장 STAGE '+(i+1)+'  '+d[0];
   show('battle');$('pmenu').classList.add('hide');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
 }
@@ -102,8 +102,10 @@ $('exit').onclick=()=>{closeUnitInfo();cancelAnimationFrame(raf);S=null;$('pmenu
 document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(true);});
 function spawnMy(k){const T=fm(MY[k]),m=lm(T.id),h=T.hp*m*tnm(T.id,'hp')*(1+0.15*futureTreasureProgress('f_health'));
   S.units.push({team:0,T:Object.assign({},T,{atk:T.atk*m*tnm(T.id,'atk')*(1+0.15*futureTreasureProgress('f_attack')),speed:T.speed*tnm(T.id,'spd')}),x:W-80,hp:h,max:h,kbn:T.kb,nk:h-h/T.kb,t:0,kt:0,at:0,ph:Math.random()*3});}
-function spawnEn(code,boss){if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),scale=CH>=3?(ENTY[code].includes('에일리언')?futureAlienMult()*(CH===3?1:CH===4?1.25:1.55):1.15):WORLD_ENEMY_SCALE,h=e[1]*S.mult*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
-  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
+// 미래편: 원작 스테이지 배율(%) × 에일리언 기본 배율(크리스탈로 감소)을 이 게임 크기로 환산 (일본 1장 보통 적 150% = 1.0)
+function futureMag(code){const pct=Math.min(1000,(S.mags&&S.mags[code])||100)/100,alien=ENTY[code].includes('에일리언')?futureAlienMult():1;return Math.pow(pct*alien/1.5,0.55);}
+function spawnEn(code,boss){if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),fut=CH>=3,mm=fut?futureMag(code):S.mult,scale=fut?1:WORLD_ENEMY_SCALE,h=e[1]*mm*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
+  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+mm*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
   if(boss){sfx('boss');S.shake=0.7;S.bw=1.4;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}} // 보스 등장: 아군 전체가 와르르 밀려나요
 }
 function deploy(k){
