@@ -1,16 +1,27 @@
 // 건우 대전쟁 · 14-battle-logic.js
 const AD={tent:.5,beam:.35,fire:.4,burst:.45,smash:.6,claw:.3,slash:.35};
 const CHXP=[1,1.5,2.5,2.2,3.3,4.5];
+// 미래편: 원작처럼 적마다 '첫 등장 시간 / 간격 / 마리수'와 '성 체력 % 이하에서 나오는 적'을 따로 가져요
+function stepFutureSpawns(d){
+  const L=d[4];
+  if(!S.fs){S.fs=L.rules.map(r=>({r,n:r[4]||Infinity,t:r[1]}));S.fb=L.bosses.map(x=>({b:x,done:false}));}
+  const alive=()=>S.units.filter(u=>u.team===1).length;
+  for(const x of S.fs){if(x.n<=0||S.t<x.t||alive()>=L.cap)continue;spawnEn(x.r[0],false);x.n--;x.t=S.t+x.r[2]+Math.random()*(x.r[3]-x.r[2]);}
+  for(const y of S.fb){if(!y.done&&S.en.hp<=S.en.max*y.b[0]/100){y.done=true;for(let k=0;k<y.b[2];k++)spawnEn(y.b[1],k===0&&y.b[3]);}}
+}
 function update(dt){
   if(S.over)return;
   const d=STS[CH][stageIdx];
   S.t+=dt;S.money=Math.min(S.maxM,S.money+dt*S.rate);S.cn=Math.min(1,S.cn+dt/S.cnr);S.lid=Math.max(0,S.lid-dt);S.cool=S.cool.map(c=>Math.max(0,c-dt));
   S.shake=Math.max(0,S.shake-dt);S.bw=Math.max(0,S.bw-dt);
   if(!S.boss&&d[2]&&S.en.hp<S.en.max){S.boss=true;spawnEn(d[2],true);}
-  S.eSpawn-=dt;
-  if(S.eSpawn<=0&&S.units.filter(u=>u.team===1).length<12){
-    const list=d[3];const code=CH>=3?list[Math.min(list.length-1,Math.floor(S.spawnN/2))]:list[Math.floor(Math.random()*list.length)];spawnEn(code,false);S.spawnN++;
-    S.eSpawn=CH>=3?(3.0+Math.random()*1.4):(4.8+Math.random()*1.7);
+  if(CH>=3&&d[4])stepFutureSpawns(d);
+  else{ // 세계편: 처음 만들었던 방식 그대로 (일정한 간격, 스테이지가 올라갈수록 조금씩 빨라짐)
+    S.eSpawn-=dt;
+    if(S.eSpawn<=0&&S.units.filter(u=>u.team===1).length<12){
+      const list=d[3];spawnEn(list[Math.floor(Math.random()*list.length)],false);
+      S.eSpawn=Math.max(1.8,5-stageIdx*0.06)+Math.random()*1.5;
+    }
   }
   for(const p of S.pj)p.t+=dt;
   for(const p of S.pj)if(p.t>=p.dur){p.done=1;const dm=150*S.mult*(1+basicProgress('cannon'))*(1+0.4*futureTreasureProgress('f_cannon'));
