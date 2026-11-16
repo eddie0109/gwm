@@ -1,0 +1,84 @@
+/* ===== Battle Cats풍 전면 GUI 스킨: 인터랙션/레이아웃만 교체, 게임 로직과 캐릭터 원화는 유지 ===== */
+:root{
+  --fg:#21170e; --card:#fff0c5; --card2:#f6d98e; --line:#23170e;
+  --btn:#ffd34d; --btn2:#f28b22; --btnfg:#241509; --clear:#55a94d;
+}
+html,body{background:#1c130b;color:#24180d;font-family:system-ui,"Noto Sans KR","Malgun Gothic",sans-serif}
+#game{background:#f4d990;border:3px solid #21160d;box-shadow:0 0 0 4px #e7a934,0 20px 70px #000c}
+.scr{
+  color:#25180c;gap:9px;padding:13px 17px;
+  background-color:#f7e5b2;
+  background-image:radial-gradient(#9e713a26 .8px,transparent .8px),linear-gradient(180deg,#fff1c9,#f1d58e);
+  background-size:7px 7px,100% 100%;
+}
+.scr:after{content:"";position:absolute;inset:0;pointer-events:none;opacity:.22;background:repeating-linear-gradient(135deg,transparent 0 15px,#fff8 15px 17px,transparent 17px 31px)}
+.scr>*{z-index:1}
+.top{min-height:43px;padding:4px 105px 8px 0;border-bottom:3px solid #2a1a0d;color:#2b1b0d;font-size:1.12rem;letter-spacing:.02em;text-shadow:1px 1px #fff7}
+.top>b:nth-child(2){font-weight:1000;text-shadow:1px 2px #fff8}
+button{
+  position:relative;border:3px solid #25170c;border-bottom-width:6px;border-radius:7px;
+  padding:8px 13px;background:linear-gradient(180deg,#fff18b 0%,#ffd64c 48%,#f49a25 100%);
+  color:#291809;font-weight:1000;letter-spacing:.01em;text-shadow:0 1px #fff9;
+  box-shadow:0 2px 0 #fff7 inset,0 3px 0 #9c5c1b,2px 4px 0 #25170c;
+  transition:transform .09s,filter .12s,box-shadow .09s;
+}
+button:before{content:"";position:absolute;inset:3px;border:1px solid #fff8;border-radius:3px;pointer-events:none}
+button:hover:not(:disabled){filter:brightness(1.12) saturate(1.12);transform:translateY(-1px)}
+button:active:not(:disabled){transform:translate(2px,3px);border-bottom-width:3px;box-shadow:0 1px 0 #fff7 inset,0 1px 0 #9c5c1b,1px 2px 0 #25170c}
+button:disabled{filter:grayscale(1) brightness(.78);opacity:.68;box-shadow:0 1px 0 #25170c}
+.nav{gap:7px}
+.nav button{border:3px solid #25170c;border-bottom-width:5px;border-radius:5px;background:linear-gradient(#fff3a5,#f8c34b 55%,#dc8425);color:#2b190a;padding:9px 7px;text-shadow:0 1px #fff9;box-shadow:0 2px 0 #fff8 inset,0 2px 0 #9b581d,2px 3px 0 #25170c}
+.nav button:nth-child(3n+2){background:linear-gradient(#ffe4a0,#ffad4a 60%,#d96c25)}
+.nav button:nth-child(3n){background:linear-gradient(#ffd1b1,#f78b62 60%,#c94d2b)}
+input{border:3px solid #2a1a0d;border-radius:5px;background:#fff8df;color:#28190d;box-shadow:inset 0 2px 4px #6c451b33}
+input:focus{outline:3px solid #ef9b25;outline-offset:1px}
+#grid{grid-template-columns:repeat(6,minmax(0,1fr));gap:8px;padding:8px 4px}
+#grid button{min-height:60px;border:3px solid #25170c;border-bottom-width:5px;border-radius:5px;background:linear-gradient(150deg,#fff1bd,#f0c96f);color:#24170c;font-size:.82rem;text-shadow:0 1px #fff9;box-shadow:inset 0 2px #fff9,0 2px 0 #a36b24,2px 3px 0 #25170c}
+#grid button b{font-size:1.1rem;color:#9e3c18;text-shadow:1px 1px #fff;margin-bottom:2px}
+#grid button.cl{border-color:#1e4c1c;background:linear-gradient(#e7ffb9,#8dcc63);color:#18300f;box-shadow:inset 0 2px #fff9,0 2px 0 #47752e,2px 3px 0 #25170c}
+#grid button:disabled{background:linear-gradient(#e4d8b8,#b7a985);color:#75684e;border-color:#6d604b}
+.tr{border:3px solid #2a1a0d;border-radius:5px;padding:10px 12px;margin-bottom:8px;background:linear-gradient(135deg,#fff3cc,#f3d58e);color:#291a0c;box-shadow:inset 0 2px #fff9,2px 3px 0 #a16b29}
+.tr small{color:#70502b}
+.up{gap:12px;align-items:center}
+.ic{filter:drop-shadow(1px 2px 0 #fff9)}
+#start{background:radial-gradient(ellipse at 50% 24%,#fff3bf 0%,#f4d276 48%,#dc9a37 100%);color:#26180b}
+#start:before{background:repeating-linear-gradient(135deg,#fff8 0 3px,transparent 3px 18px);opacity:.35}
+.t1{color:#fff5d2;-webkit-text-stroke:3px #29180a;paint-order:stroke fill;text-shadow:0 5px 0 #7a3414,3px 7px 0 #25170c,0 0 16px #fff}
+.t2{color:#ef4b25;-webkit-text-stroke:2px #2b170a;paint-order:stroke fill;text-shadow:0 4px 0 #9b3c12,3px 6px 0 #25170c}
+.sub{color:#4a2a12;font-weight:900;text-shadow:0 1px #fff9}
+#start #goStart{border-width:4px;border-bottom-width:7px;border-radius:8px;background:linear-gradient(#fff6a5,#ffce38 52%,#f47a20);font-size:1.45rem;color:#321809;box-shadow:0 3px 0 #fff9 inset,0 4px 0 #9c4a16,3px 5px 0 #25170c}
+#login .box{gap:9px}
+#login .tr{background:linear-gradient(135deg,#fff3d0,#f2d18b)}
+#forml,#ql,#upl,#trl{padding:3px 4px}
+#gl{gap:8px}
+#gcv{border:4px solid #28190d;border-radius:5px;background:#fff0c5;box-shadow:inset 0 0 0 2px #fff9,2px 3px 0 #a06b2a}
+#gp{color:#291a0c;font-weight:900}
+#gp .nav{margin-top:8px}
+#battle{background:#18120b}
+#bwrap{background:#000;border-bottom:4px solid #24170d}
+#hud{padding:7px 100px 0 9px}
+#pause{border-radius:50%;width:42px;height:42px;padding:0;background:linear-gradient(#fff3a2,#f4a72c);font-size:1.25rem}
+#stageTitle{top:9px;color:#fff3c6;font-weight:1000;text-shadow:2px 2px #000,-1px -1px #000,1px -1px #000,-1px 1px #000}
+#money{color:#ffdf49;-webkit-text-stroke:1px #271608;paint-order:stroke fill;text-shadow:2px 2px #000,-2px -2px #000,2px -2px #000,-2px 2px #000}
+#ctrl{grid-template-columns:145px 1fr 145px;gap:7px;padding:7px 9px;background:linear-gradient(180deg,#f5d77f,#d99b3e);border-top:4px solid #24170d;box-shadow:inset 0 3px #fff7}
+#wk,#cn{border:4px solid #26170c;border-bottom-width:6px;border-radius:6px;background:linear-gradient(#fff0a0,#f7b93e 58%,#dc7622);color:#2a180a;font-size:1.03rem;font-weight:1000;text-shadow:0 1px #fff9;box-shadow:inset 0 2px #fff9,0 3px 0 #99551b,2px 4px 0 #26170c}
+#cn{background:linear-gradient(#ffdc91,#f58a38 58%,#c64a25);color:#2b170a}
+#slots{gap:5px}
+#slots button{border:3px solid #2b1a0d;border-bottom-width:5px;border-radius:5px;background:linear-gradient(#fff0c5,#e8bd68 72%,#c98a38);color:#26170b;text-shadow:none;box-shadow:inset 0 2px #fff9,0 2px 0 #9b6527,2px 3px 0 #26170c}
+#slots button:before{inset:2px;border-color:#fff9}
+#slots button:disabled{opacity:.48;filter:grayscale(.85)}
+#slots canvas{filter:drop-shadow(1px 2px 0 #fff8)}
+#slots .pr{color:#b23a16;text-shadow:1px 1px #fff,-1px -1px #fff,1px -1px #fff,-1px 1px #fff;font-weight:1000}
+#slots button.poor .pr{color:#777}
+#slots .cdv{background:#24170dcc}
+.pbox{width:330px;gap:12px;padding:18px;background:linear-gradient(#fff1c4,#e9bd67);border:4px solid #26170c;border-radius:7px;color:#26170c;box-shadow:5px 6px 0 #0008,inset 0 2px #fff9}
+.pbox h2{font-weight:1000;text-shadow:1px 2px #fff}
+.pbox button{font-size:1.05rem}
+#toast{background:#fff0b9;border:3px solid #27180c;color:#29190a;border-radius:5px;font-weight:1000;box-shadow:3px 4px 0 #0008}
+#fsb,#snd{border:3px solid #25170c;border-bottom-width:5px;border-radius:5px;background:linear-gradient(#fff0a0,#efa33a);color:#28170a;box-shadow:0 2px 0 #fff8 inset,2px 3px 0 #25170c}
+#rot{background:#f8d98c;border-bottom:4px solid #25170c;color:#28180a;text-shadow:0 1px #fff}
+/* 목록/카드 터치 피드백 */
+.tr:active{transform:translateY(1px);filter:brightness(.97)}
+button:focus-visible{outline:3px dashed #b63c1d;outline-offset:2px}
+@media (max-width:700px){#grid{gap:6px}#grid button{font-size:.74rem;padding:5px 2px}#ctrl{grid-template-columns:125px 1fr 125px}#slots{gap:3px}}
+
