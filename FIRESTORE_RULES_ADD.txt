@@ -1,0 +1,76 @@
+// Firebase Console → Firestore Database → 규칙
+// 중요: 이 코드는 기존 rules_version = '2'; service cloud.firestore {
+// match /databases/{database}/documents { ... } } 안에 추가해야 합니다.
+// 기존 users 규칙을 절대 지우지 마세요.
+
+match /dojoRooms/{code} {
+  // 방 코드는 무작위 8자리. 목록 검색은 차단하고 코드로만 조회 가능.
+  allow get: if request.auth != null;
+  allow list: if false;
+
+  allow create: if request.auth != null
+    && code.matches('^[A-HJ-NP-Z2-9]{8}$')
+    && request.resource.data.hostUid == request.auth.uid
+    && request.resource.data.guestUid == ''
+    && request.resource.data.status == 'waiting'
+    && request.resource.data.hostDeck is list
+    && request.resource.data.hostDeck.size() <= 10
+    && request.resource.data.createdAt is number
+    && request.resource.data.keys().hasOnly([
+      'hostUid','hostName','guestUid','guestName','hostDeck','guestDeck',
+      'hostStats','guestStats','status','createdAt','lastActive',
+      'winner','reason','snapshot'
+    ]);
+
+  // 방장만 전투 상태를 전송하거나 방 종료를 선언할 수 있음.
+  allow update: if request.auth != null && (
+    (
+      resource.data.hostUid == request.auth.uid
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'snapshot','lastActive','status','winner','reason'
+      ])
+      && (request.resource.data.status == 'playing' || request.resource.data.status == 'ended')
+    ) || (
+      // 참가자는 비어 있는 방에 한 번만 합류
+      resource.data.status == 'waiting'
+      && resource.data.guestUid == ''
+      && resource.data.hostUid != request.auth.uid
+      && request.resource.data.guestUid == request.auth.uid
+      && request.resource.data.guestDeck is list
+      && request.resource.data.guestDeck.size() <= 10
+      && request.resource.data.status == 'playing'
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'guestUid','guestName','guestDeck','guestStats','status','lastActive'
+      ])
+    ) || (
+      // 참가자 나가기
+      resource.data.guestUid == request.auth.uid
+      && resource.data.status == 'playing'
+      && request.resource.data.status == 'ended'
+      && request.resource.data.winner == 0
+      && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+        'status','winner','reason','lastActive'
+      ])
+    )
+  );
+  allow delete: if request.auth != null && resource.data.hostUid == request.auth.uid;
+
+  match /commands/{commandId} {
+    function room() { return get(/databases/$(database)/documents/dojoRooms/$(code)).data; }
+    allow get, list: if request.auth != null
+      && (room().hostUid == request.auth.uid || room().guestUid == request.auth.uid);
+    allow create: if request.auth != null
+      && room().status == 'playing'
+      && room().guestUid == request.auth.uid
+      && request.resource.data.uid == request.auth.uid
+      && request.resource.data.side == 1
+      && request.resource.data.kind in ['deploy','worker','cannon']
+      && request.resource.data.slot is int
+      && request.resource.data.slot >= 0
+      && request.resource.data.slot <= 9
+      && request.resource.data.createdAt is number
+      && request.resource.data.keys().hasOnly(['uid','side','kind','slot','createdAt']);
+    allow delete: if request.auth != null && room().hostUid == request.auth.uid;
+    allow update: if false;
+  }
+}
