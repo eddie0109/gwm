@@ -229,7 +229,7 @@ function command(side,kind,slot){
   p.cool[slot]=Math.max(floor,v.T.cool*(1-.75*r));p.coolMax[slot]=p.cool[slot];
   const kb=Math.max(1,v.T.kb||2),x=side===0?720:80;
   s.units.push({id:++s.seq,side,unitId:item.id,form:item.form||1,x,hp:v.hp,maxHp:v.hp,atk:v.T.atk,range:bounded(v.T.range,18,400),minR:bounded(v.T.minR||0,0,350,0),speed:v.T.speed,cd:Math.max(.3,v.T.cd),timer:0,area:!!v.T.area,ty:v.T.ty||['무속성'],
-   freezeNeutral:v.T.freezeNeutral||0,freezeStrong:v.T.freezeStrong||0,freezeTime:v.T.freezeTime||0,slowS:!!v.T.slowS,dodge:v.T.dodge||0,alienMult:v.T.alienMult||0,hitDelay:v.T.hitDelay||0,
+   freezeNeutral:v.T.freezeNeutral||0,freezeStrong:v.T.freezeStrong||0,freezeTime:v.T.freezeTime||0,slowS:!!v.T.slowS,dodge:v.T.dodge||0,alienMult:v.T.alienMult||0,hitDelay:v.T.hitDelay||0,kbRecover:!!v.T.kbRecover,
    slow:0,freeze:0,dh:0,mv:false,an:v.T.an||'slash',kb,kbn:v.hp-(v.hp/kb),hitEvT:-1,popT:-1});
   ev('spawn',{x,u:item.id});
  }
@@ -284,7 +284,7 @@ function tick(dt){
   u.timer-=dt;u.mv=false;
   u.slow=Math.max(0,u.slow-dt);u.freeze=Math.max(0,u.freeze-dt);
   if(u.freeze>0)continue;
-  if(u.knock>0){u.knock-=dt;u.dh=0;u.x=Math.max(55,Math.min(745,u.x+(u.side===0?1:-1)*160*dt));continue;}
+  if(u.knock>0){u.knock-=dt;u.dh=0;u.x=Math.max(55,Math.min(745,u.x+(u.side===0?1:-1)*160*dt));if(u.knock<=0&&u.kbRecover)u.timer=0;continue;}
   if(u.dh>0){u.dh-=dt;if(u.dh<=0){u.dh=0;strikePv(u);}continue;}
   const dir=u.side===0?-1:1;
   let target=null,best=Infinity;
@@ -334,7 +334,7 @@ function makeViewUnit(id,side,unitId,form,x){
  return {id,team:teamOf(side),T,x,tx:x,hp:1,max:1,kt:0,at:0,ad:0,mv:0,sl:0,fr:0,ph:Math.random()*3,pvp:true};
 }
 function applyEvent(e){
- if(e.k==='atk'){const d=view.units.get(e.id);if(d){d.ad=Math.min(AD[d.T.an]||.35,Math.max(.3,d.T.cd||1)*.8);if(d.T.train)d.ad=1.3;d.at=d.ad;}}
+ if(e.k==='atk'){const d=view.units.get(e.id);if(d){d.ad=Math.min(AD[d.T.an]||.35,Math.max(.3,d.T.cd||1)*.8);if(d.T.train)d.ad=window.STEAM_TRAIN_TIMING?STEAM_TRAIN_TIMING.attack:.9;d.at=d.ad;}}
  else if(e.k==='hit'){const x=mirrorX(e.x);if(view.spk.length<70)for(let j=0;j<4;j++)view.spk.push({x:x+(Math.random()-.5)*18,y:GY-8-Math.random()*46,t:0,col:j%2?'#81e6ff':'#ffe376'});sfxHit();}
  else if(e.k==='kb'){const d=view.units.get(e.id);if(d)d.kt=.35;}
  else if(e.k==='die'){let d=view.units.get(e.id);if(!d)d=makeViewUnit(e.id,e.s,e.u,e.f,mirrorX(e.x));if(d){view.units.delete(e.id);d.at=0;d.kt=0;view.fx.push({u:d,t:0});}}
@@ -373,8 +373,7 @@ function renderWorld(state){
  g.clearRect(0,0,W,300);g.save();
  if(view.shake>0)g.translate((Math.random()-.5)*view.shake*14,(Math.random()-.5)*view.shake*10);
  bg();drawEnemyBase(10,150);drawCan(W-60,150);
- txt(Math.max(0,Math.ceil(foe.baseHp))+' / '+Math.round(foe.baseMax),35,128,14);
- txt(Math.max(0,Math.ceil(me.baseHp))+' / '+Math.round(me.baseMax),W-38,128,14);
+ castleHpText(Math.max(0,Math.ceil(foe.baseHp))+' / '+Math.round(foe.baseMax),Math.max(0,Math.ceil(me.baseHp))+' / '+Math.round(me.baseMax));
  // 상대 유닛 먼저, 아군 유닛을 위에 (세계편과 같은 겹침 순서)
  const list=[...view.units.values()].sort((a,b)=>b.team-a.team);
  for(const u of list)dsp(u,0);

@@ -87,12 +87,24 @@ function migrateFutureTreasures(){let changed=false;for(const ch of [3,4,5])for(
  if(trc[old]&&!trc[now]){trc[now]=1;changed=true;}
 }return changed;}
 const FUTURE_STAGE_NAMES=ST.map(x=>x[0]);
+// 스테이지마다 고정된 시드로 적 조합·출현 패턴을 다르게 만듭니다 (같은 스테이지는 항상 같은 구성).
+// 패턴: mixed(골고루) / rush(에일리언 돌격 + 몰려오기) / tank(강한 적 위주, 느린 출현) / swarm(약한 적 대량) / wave(점점 커지는 무리)
+const FUTURE_PATTERNS=['mixed','rush','tank','swarm','wave'];
+const FUTURE_PATTERN_NAMES={mixed:'혼전',rush:'돌격',tank:'중장갑',swarm:'물량',wave:'파도'};
+function seededRand(seed){let x=seed>>>0||1;return()=>{x^=x<<13;x>>>=0;x^=x>>>17;x^=x<<5;x>>>=0;return x/4294967296;};}
 function makeFutureStage(ch,i){
  const boss=i===47?['A','Ω','0'][ch]:i===23?['f','p','t'][ch]:i===42?['k','n','s'][ch]:i===37?['e','q','v'][ch]:'';
  const kinds=ch===0?'abhicdejgk':ch===1?'abhicdejgkmno':'abhicdejgkmnorstv';
- const size=i<8?3:i<20?4:i<35?6:8;
- const pool=Array.from(new Set(('DS'+kinds.slice(0,Math.min(kinds.length,size))+ (i>30?'GJ':'')).split(''))).join('');
- return [FUTURE_STAGE_NAMES[i],Math.round((3500+i*360+i*i*25)*(1+ch*.65)),boss,pool];
+ const rnd=seededRand(9973*(ch+1)+i*7919+31);
+ const unlocked=Math.min(kinds.length,3+Math.floor(i/5)+ch*2),pool=new Set();
+ pool.add(kinds[unlocked-1-Math.floor(rnd()*Math.min(3,unlocked))]); // 새로 등장한 에일리언 중 하나는 꼭 포함
+ const nAlien=2+Math.floor(rnd()*(i<10?2:3));
+ for(let k=0;k<nAlien*3&&pool.size<nAlien;k++)pool.add(kinds[Math.floor(rnd()*unlocked)]);
+ const fillers=i<16?'DST':i<32?'DSTHPJB':'DSTHPJGBRZ';
+ const nFill=1+Math.floor(rnd()*3);for(let k=0;k<nFill;k++)pool.add(fillers[Math.floor(rnd()*fillers.length)]);
+ const pat=i===0?'mixed':FUTURE_PATTERNS[Math.floor(rnd()*FUTURE_PATTERNS.length)];
+ const hpMul=pat==='tank'?1.25:pat==='swarm'?0.85:1;
+ return [FUTURE_STAGE_NAMES[i],Math.round((3500+i*360+i*i*25)*(1+ch*.65)*hpMul),boss,[...pool].join(''),pat];
 }
 STS.push(...[0,1,2].map(ch=>ST.map((_,i)=>makeFutureStage(ch,i))));
 // 게임의 첫 스테이지가 한국인 순서를 유지: 한국에서는 멍뭉이/낼름이/놈놈놈/하마양, 성 공격 시 에일리언 멍뭉이 1마리만 등장.

@@ -83,7 +83,7 @@ U({id:'shrimp',name:'불꽃새우',grid:SHRIMP,s:4,hp:260,atk:22,range:70,speed:
 // ── 울트라 슈퍼 레어 (레어 뽑기 5%)
 U({id:'frog',name:'황소개구리',grid:FROG,s:5,hp:180,atk:120,range:280,minR:100,speed:22,cd:3.2,cost:2500,cool:25,kb:5,area:true,leap:true,an:'leap',slowS:true,col:'#4caf3a',acc:'#d6f0a0',aura:'#9be07a',t:'UR',ty:['고대종'],trn:trnOf(8,12,3,14),desc:'크게 점프해서 멀리 있는 적을 내리찍는 범위 공격. 추가 데미지를 줄 수 있는 속성의 적을 맞히면 3초 동안 느리게 만들어요.',
   f2:{name:'황소두꺼비',cost:2500,grid:deco(FROG,['crown','wings','spikes']),col:'#2e8b2e',acc:'#ffe27a',aura:'#ffe27a'}}),
-U({id:'steamtrain',name:'증기기관차 건우통',grid:CAN,train:true,s:1,spriteW:88,spriteH:42,hp:2600,atk:130,range:120,speed:26,cd:3.2,cost:3000,cool:95,kb:10,area:true,an:'train',hitDelay:0.52,alienMult:3,col:'#2e323c',acc:'#ffd23a',aura:'#ffd23a',t:'UR',ty:['메탈'],trn:trnOf(10,10,4,14),desc:'건우통이 지붕에 올라탄 증기기관차. 증기를 모아 뒤로 물러났다가 앞으로 돌진해 범위 안의 적을 한꺼번에 들이받아요. 히트백 10회로 쉽게 밀리지 않고, 에일리언에게는 3배 데미지를 줘요.',
+U({id:'steamtrain',name:'증기기관차 건우통',grid:CAN,train:true,s:1,spriteW:88,spriteH:42,hp:2600,atk:130,range:140,speed:90,cd:3.2,cost:3000,cool:95,kb:10,kbRecover:true,area:true,an:'train',hitDelay:0.14,alienMult:3,col:'#2e323c',acc:'#ffd23a',aura:'#ffd23a',t:'UR',ty:['메탈'],trn:trnOf(10,10,4,14),desc:'건우통이 지붕에 올라탄 증기기관차. 에너지원보다 빠르게 달려가 멈추지 않고 그대로 범위 안의 적을 한꺼번에 들이받아요. 히트백 10회로 쉽게 밀리지 않고, 밀려나도 곧바로 다시 돌진하며, 에일리언에게는 3배 데미지를 줘요.',
   f2:{name:'초특급 증기기관차 건우통',trainSkin:'red',aura:'#ff6a3a'}}),
 // ── EX (각 장의 마지막 보스를 쓰러뜨리면 획득)
 U({id:'fist',name:'격투가 강철',grid:FIGHT,s:4,hp:700,atk:30,range:44,speed:40,cd:.7,cost:3000,cool:14,kb:3,area:true,an:'burst',col:'#d89a68',acc:'#e0402a',t:'EX',ty:['무속성'],trn:trnOf(8,10,6),desc:'1장 보스 격투왕 강철을 쓰러뜨리고 얻은 EX 캐릭터. 빠른 주먹으로 주변을 한꺼번에 때려요. (보스보다는 약해요)',

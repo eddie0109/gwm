@@ -100,3 +100,7 @@
 #vtsStages .vts-stage-entry b{font-size:.88rem;margin-bottom:0;}
 #vtsStages .vts-stage-entry small{font-size:.72rem;line-height:1.18;}
 #vtsStages .vts-stage-icon{max-height:42px;max-width:75px;}
+/* 레전드 스토리 목록 */
+#vtsStages{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
+#vtsStages h2{margin:2px 0 4px}#vtsStages h3{margin:10px 0 2px;font-size:1rem}
+#vtsStages .xp-icon{font-size:34px;width:75px;text-align:center;line-height:42px}
