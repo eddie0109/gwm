@@ -100,7 +100,7 @@ window.drawSteamTrainIcon=function(c,x,y,w,h,flip,skin){
 };
 
 // ── 전투 중 모션: 유닛 상태(이동 mv / 공격 at / 히트백 kt)에서 기관차 동작을 계산
-// 공격 타임라인(ATK_T초): 멈추지 않고 달리던 그대로 앞으로 돌진 → IMPACT초에 충돌 → 반동 → 제자리
+// 이동과 공격을 하나의 돌격으로: 달려가며(이동) → 그대로 박치기(공격, IMPACT초) → 반동 → 멈춰서 대기 → 다시 돌격·박치기
 const K=1.25;              // 전장 표시 배율 (조금 크게)
 const ATK_T=0.9,IMPACT=0.14;
 const WHEEL=5;             // 이동 중 바퀴 회전 속도 (느릴수록 묵직함)
@@ -122,16 +122,16 @@ function step(tr,u,f,dt){
   if(s!==tr.state)enter(tr,u,f,s);
   tr.st+=dt;tr.t+=dt;if(tr.flash>0)tr.flash-=dt*5;
   let o=0,sl=0,b=0;const ckx=tr.off+138,cky=tr.bob-70;
-  if(s==='move'){
-    tr.ang+=dt*WHEEL;b=Math.sin(tr.ang*2)>0.2?-1:0;
-    if(Math.floor(tr.ang/Math.PI)!==Math.floor((tr.ang-dt*WHEEL)/Math.PI))addPuff(tr,u,f,ckx,cky,3,-40,-16,1.5,7);
+  if(s==='move'){ // 이동 = 돌격: 앞으로 기울고 연기를 길게 뿜으며 달려감 (공격 박치기로 그대로 이어짐)
+    tr.ang+=dt*WHEEL;b=Math.sin(tr.ang*2)>0.2?-1:0;sl=0.012;o=Math.min(1,tr.st*3)*4;
+    tr.spawnT-=dt;if(tr.spawnT<0){tr.spawnT=0.12;addPuff(tr,u,f,ckx,cky,3,-60-Math.random()*15,-14-Math.random()*6,1.1,8);}
   }else if(s==='idle'){
     b=Math.sin(tr.t*2.4)>0.45?1:0;tr.spawnT-=dt;
     if(tr.spawnT<0){tr.spawnT=0.8;addPuff(tr,u,f,ckx,cky,2,-6,-14,1.1,3);}
     if(Math.floor(tr.t/2.2)!==Math.floor((tr.t-dt)/2.2))for(let i=0;i<3;i++)addPuff(tr,u,f,tr.off+152,-10,2,26+i*8,-4-i*3,0.55,5);
   }else if(s==='attack'){const T=atkTime(u);
     if(T<IMPACT){ // 1) 달리던 속도 그대로 가속하며 돌진 (멈춤·후진 없음)
-      const k=T/IMPACT,e=k*k;o=34*e;sl=0.02*e;tr.ang+=dt*(WHEEL+40*k);
+      const k=T/IMPACT,e=k*k;o=4+30*e;sl=0.012+0.01*e;tr.ang+=dt*(WHEEL+40*k);
       tr.spawnT-=dt;if(tr.spawnT<0){tr.spawnT=0.03;addPuff(tr,u,f,ckx,cky,3+Math.random()*2,-50-Math.random()*20,-24-Math.random()*10,0.8,9);}
     }else{
       if(!tr.hitDone){tr.hitDone=true;tr.impact={t:0};tr.flash=0.6;if(S&&typeof S.shake==='number')S.shake=Math.max(S.shake,0.2);
@@ -180,7 +180,7 @@ window.drawSteamTrainUnit=function(c,u,ft){
   c.scale(f*K,K);
   if(ft===0){c.fillStyle='rgba(0,0,0,0.3)';c.fillRect(tr.off-CX+12,1,166,2);
     if(T.aura){c.save();c.globalAlpha=0.16+0.08*Math.sin(tm*6);c.fillStyle=T.aura;c.beginPath();c.ellipse(tr.off-CX+95,-44,96,44,0,0,7);c.fill();c.restore();}}
-  if(u.at>0&&ft===0){const at=atkTime(u);if(at<0.3){c.fillStyle='rgba(255,255,255,0.85)';
+  if(ft===0&&(tr.state==='move'||u.at>0&&atkTime(u)<0.3)){const at=u.at>0?atkTime(u):tr.t%0.3;{c.fillStyle='rgba(255,255,255,0.85)';
     for(let i=0;i<7;i++){const len=30+((i*13+Math.floor(at*60))%20);c.fillRect(tr.off-CX-len+14,tr.bob-64+i*9,len,1);}}}
   blit(c,src,tr.off-CX,-GYL+tr.bob,tr.slope,47);
   if(ft===0&&tr.impact){const k=tr.impact.t/0.45,x=tr.off-CX+184,y=-16;c.globalAlpha=1-k*0.6;const r=4+Math.round(k*28);

@@ -45,6 +45,15 @@ const TOOTH_EX=[
 '...........KAAAAAAAAK...........',
 '.............KKKKKK.............'];
 
+
+// ── 추가 뽑기 캐릭터 도트 (오른쪽을 봐요)
+const STARFISH=["......KK......",".....KCCK.....",".....KCCK.....","KKKKKKCCKKKKKK","KCCCCCHCCCCCCK",".KCCCEPCEPCCK.","..KCCCCCCCCK..","..KCCCAACCCK..",".KCCCKKKKCCCK.",".KCCK....KCCK.","KCCK......KCCK","KKK........KKK"];
+const JELLY=["....KKKKKK....","..KKHHCCCCKK..",".KHHCCCCCCCCK.","KHCCEPCCEPCCCK","KCCCCCCCCCCCCK","KAKAKAKAKAKAKK",".KAK.KAK.KAK..",".KA..KA..KA...","..KA..KA..KA..",".KA..KA..KA...","..K...K...K..."];
+const URCHIN=["..K..K..K..K..","...KK.KK.KK...","K.KCCCCCCCCK.K",".KCHHCCCCCCCK.","KKCHCEPCEPCCKK",".KCCCCCCCCCCK.","KKCCCCAACCCCKK",".KCDCCCCCCDCK.","K.KDDDDDDDDK.K","...KK.KK.KK...","..K..K..K..K.."];
+const SWORDF=[".......KK..............","......KCCK.............","....KKCCCCKKKK.........","KK.KCHHCCCCCCCKK.......","KCKCCCCCCCCCCEPCKKKKKKK","KCCCCCCCCCCCCCCCWWWWWWK","KCKDDCCCCCCCCCCCKKKKKKK","KK.KAADDDDDDDDKK.......","....KKAAKKKKKK.........","......KK..............."];
+const WHALE=["............W..W...",".............WW....","......KKKKKKKKK....","....KKCCCCCCCHHKK..","K..KCCCCCCCCCCCCHK.","KAKKCCCCCCCCCCEPCHK","KAKCCCCCCCCCCCCCCCK","K.KCCCCCWWWWWWWWWCK","...KCCCCWWWWWWWWCK.",".....KKCCCCCCCCKK..",".......KKKKKKKKK..."];
+const LOBSTER=["KK...........KK.","KAK.........KAK.",".KAK..KKKK.KAK..","..KAKKCCCCKAK...","...KKCEPCEPK....","....KCCCCCCK....","...KCCHHCCCCK...","..KCKCCCCCCKCK..",".KCK.KCCCCK.KCK.",".KK..KCDDCK..KK.","....KCK..KCK....","....KK....KK...."];
+
 const MY=[
 U({id:'junchi',name:'준치',grid:FISH,s:3,hp:100,atk:8,range:65,speed:42,cd:1.23,cost:50,cool:5,kb:3,t:'N',ty:['무속성'],trn:trnOf(8,8,8),desc:'썩어도 준치! 가시가 많은 은빛 물고기예요. 가장 기본이 되는 단일 공격 유닛.',
   f2:{name:'황금준치',grid:deco(FISH,['crown','wings','spikes']),pal:{B:'#c98a14',S:'#ffd84a',L:'#fff2a8'},aura:'#ffd84a',gold:1}}),
@@ -69,6 +78,12 @@ U({id:'crab',name:'집게병',grid:CRAB,s:4,hp:260,atk:12,range:30,speed:32,cd:1
   f2:{name:'철갑 왕게',grid:deco(CRAB,['armor','horns']),col:'#c02a1a',acc:'#ffd84a',aura:'#ff9a6a'}}),
 U({id:'ray',name:'가오리글라이더',grid:RAY,s:4,hp:110,atk:8,range:36,speed:74,cd:.5,cost:160,cool:9,kb:2,float:true,col:'#5ac0e8',acc:'#f2fbff',t:'R',ty:['부유'],trn:trnOf(6,6,12),desc:'하늘을 헤엄치듯 날아다니는 가오리 글라이더. 아주 빠르고 연타가 좋아요.',
   f2:{name:'천공 가오리',grid:deco(RAY,['wings','ring']),col:'#3a78e8',acc:'#ffffff',aura:'#a6d0ff'}}),
+U({id:'starfish',name:'불가사리 표창병',grid:STARFISH,s:4,hp:110,atk:15,range:95,speed:40,cd:.8,cost:180,cool:8,kb:3,an:'spin',kbStyle:'spin',col:'#f08a4a',acc:'#ffe08a',t:'R',ty:['레드'],trn:trnOf(6,10,8),desc:'몸을 빙글빙글 돌려 별 표창을 던지는 불가사리. 사거리가 길고 연사가 빨라요. 밀려날 때 팽이처럼 돌아요.',
+  f2:{name:'유성 불가사리',grid:deco(STARFISH,['crown','ring']),col:'#ff5a3a',acc:'#fff27a',aura:'#ffb36a'}}),
+U({id:'jelly',name:'해파리 전기술사',grid:JELLY,s:4,hp:90,atk:12,range:85,speed:28,cd:1.3,cost:200,cool:10,kb:2,area:true,float:true,an:'zap',kbStyle:'squash',col:'#b8a8f8',acc:'#7fe8ff',aura:'#c9f2ff',t:'R',ty:['부유'],trn:trnOf(5,10,6),desc:'둥둥 떠서 앞쪽에 번개를 내리치는 해파리. 범위 공격이라 무리를 한꺼번에 감전시켜요.',
+  f2:{name:'뇌운 해파리',grid:deco(JELLY,['wings','crown']),col:'#8a6af8',acc:'#fff27a',aura:'#d2c4ff'}}),
+U({id:'urchin',name:'성게 방패병',grid:URCHIN,s:4,hp:420,atk:5,range:26,speed:22,cd:1.2,cost:220,cool:9,kb:1,an:'spike',kbStyle:'bounce',col:'#5a3a7a',acc:'#ff8ad0',t:'R',ty:['블랙'],trn:trnOf(12,3,4,10),desc:'가시를 곤두세우고 버티는 성게. 체력이 높고, 공격할 때 몸을 부풀려 가시를 사방으로 쏘아요.',
+  f2:{name:'철가시 성게',grid:deco(URCHIN,['armor','spikes']),col:'#3a2a5a',acc:'#ffd84a',aura:'#c09aff'}}),
 // ── 슈퍼 레어
 U({id:'shark',name:'상어기사',grid:SHARK,s:4,hp:420,atk:34,range:38,speed:40,cd:.9,cost:420,cool:16,kb:3,col:'#5a7aa8',acc:'#f0f6ff',t:'SR',ty:['블랙'],desc:'날카로운 이빨로 한 방이 강한 상어 기사. 체력과 공격력이 모두 높아요.',
   f2:{name:'상어 제독',grid:deco(SHARK,['crown','armor','cape']),col:'#2a4a8a',acc:'#ffe27a',aura:'#8fb0ff'}}),
@@ -80,6 +95,12 @@ U({id:'eel',name:'전기뱀장어',grid:EEL,s:4,hp:150,atk:26,range:120,speed:30
   f2:{name:'뇌룡장어',grid:deco(EEL,['horns','flame']),col:'#2a4ad8',acc:'#fff04a',aura:'#8fb0ff'}}),
 U({id:'shrimp',name:'불꽃새우',grid:SHRIMP,s:4,hp:260,atk:22,range:70,speed:32,cd:1.2,cost:560,cool:20,kb:2,area:true,an:'fire',col:'#ff7a3a',acc:'#ffe08a',t:'SR',ty:['레드'],desc:'불꽃을 뿜어 넓은 범위를 태워버리는 새우 마법사. 공격력이 강해요.',
   f2:{name:'불사조 새우',grid:deco(SHRIMP,['wings','flame']),col:'#ff4a1a',acc:'#ffe24a',aura:'#ffb36a'}}),
+U({id:'swordfish',name:'황새치 창기사',grid:SWORDF,s:3,hp:320,atk:72,range:62,speed:50,cd:1.7,cost:600,cool:18,kb:3,an:'pierce',kbStyle:'spin',col:'#4a7ad8',acc:'#e8f4ff',t:'SR',ty:['부유'],trn:trnOf(6,12,8),desc:'긴 창 같은 주둥이로 순식간에 찌르고 돌아오는 황새치 기사. 한 방이 매우 강하고 빨라요.',
+  f2:{name:'창천 황새치',grid:deco(SWORDF,['wings','crown']),col:'#2a4ab8',acc:'#ffe27a',aura:'#8fb0ff'}}),
+U({id:'whale',name:'고래 포격수',grid:WHALE,s:3,hp:720,atk:46,range:210,speed:16,cd:3,cost:900,cool:24,kb:2,area:true,an:'water',kbStyle:'roll',col:'#3a6aa8',acc:'#8fd8ff',t:'SR',ty:['천사'],trn:trnOf(9,10,4,12),desc:'머리의 분수공으로 커다란 물대포를 쏘아 먼 곳의 적을 한꺼번에 덮치는 고래. 느리지만 튼튼해요.',
+  f2:{name:'대해의 고래',grid:deco(WHALE,['crown','armor']),col:'#2a4a88',acc:'#bff0ff',aura:'#9ad8ff'}}),
+U({id:'lobster',name:'랍스터 장군',grid:LOBSTER,s:4,hp:620,atk:34,range:46,speed:30,cd:1.1,cost:650,cool:18,kb:3,area:true,an:'snip',kbStyle:'bounce',col:'#d8402a',acc:'#ffd0a0',t:'SR',ty:['에일리언'],trn:trnOf(9,10,5),desc:'양손 집게로 앞의 적을 연달아 잘라내는 랍스터 장군. 체력과 공격력이 고르게 높은 범위 공격수.',
+  f2:{name:'철갑 랍스터 대장군',grid:deco(LOBSTER,['armor','horns','cape']),col:'#a82a1a',acc:'#ffd84a',aura:'#ff9a6a'}}),
 // ── 울트라 슈퍼 레어 (레어 뽑기 5%)
 U({id:'frog',name:'황소개구리',grid:FROG,s:5,hp:180,atk:120,range:280,minR:100,speed:22,cd:3.2,cost:2500,cool:25,kb:5,area:true,leap:true,an:'leap',slowS:true,col:'#4caf3a',acc:'#d6f0a0',aura:'#9be07a',t:'UR',ty:['고대종'],trn:trnOf(8,12,3,14),desc:'크게 점프해서 멀리 있는 적을 내리찍는 범위 공격. 추가 데미지를 줄 수 있는 속성의 적을 맞히면 3초 동안 느리게 만들어요.',
   f2:{name:'황소두꺼비',cost:2500,grid:deco(FROG,['crown','wings','spikes']),col:'#2e8b2e',acc:'#ffe27a',aura:'#ffe27a'}}),
