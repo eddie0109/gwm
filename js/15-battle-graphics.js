@@ -1,5 +1,8 @@
 // 건우 대전쟁 · 15-battle-graphics.js
 function txt(t,x,y,size){g.font='bold '+size+'px sans-serif';g.textAlign='center';g.lineWidth=3;g.strokeStyle='#000a';g.strokeText(t,x,y);g.fillStyle='#fff';g.fillText(t,x,y);}
+// 성 체력 표시: 숫자가 길어도 화면 밖으로 잘리지 않게 위치 보정
+function castleHpText(en,my){g.font='bold 14px sans-serif';
+  txt(en,Math.max(35,g.measureText(en).width/2+6),128,14);txt(my,Math.min(W-38,W-g.measureText(my).width/2-6),128,14);}
 function dsp(u,ft){
   if(u.T.train&&window.drawSteamTrainUnit){window.drawSteamTrainUnit(g,u,ft);return;}
   const T=u.T,grid=u.team===0?T.grid:u.code==='O'?CORN_EX:u.code==='C'||u.code==='0'?TOOTH_EX:u.code==='Ω'?CORN_EX:u.code==='A'?deco(FIGHT,['armor','wings']):(T.grid||TPL[T.tpl]),s=T.s,h=(T.spriteH||grid.length)*s,w=(T.spriteW||Math.max(...grid.map(r=>r.length)))*s,dir=u.team===0?-1:1,an=T.an;
@@ -8,6 +11,8 @@ function dsp(u,ft){
   else{
     // 이동 중에는 정지 자세를 유지합니다. // 걷기 모션
     if(u.kt>0){const p=Math.min(1,u.kt/0.35);oy=-Math.sin(p*Math.PI)*14;rot=-dir*0.35;}
+    else if(u.at<=0&&u.mv&&!T.float){const t=S.t+(u.ph||0),w=Math.abs(Math.sin(t*8.5)); // 걷기: 통통 튀며 살짝 기울기
+      oy-=w*4;rot=dir*0.05*Math.sin(t*8.5);sx=1+0.04*(1-w);sy=1-0.04*(1-w);}
     else if(u.at<=0){const t=S.t+(u.ph||0),id=T.id||'';const bob=Math.sin(t*(id==='energy'?5:id==='frog'?2.4:3.2))* (id==='gtong'?1.5: id==='frog'?2.5:3.5);oy+=T.float?-8+bob:bob;
       if(id==='energy'){rot=Math.sin(t*1.8)*0.10;sx=1+0.035*Math.sin(t*4);}
       else if(id==='gtong'){rot=Math.sin(t*1.7)*0.035;}
@@ -64,7 +69,7 @@ function dsp(u,ft){
   g.save();if(ft===0){g.fillStyle='#1b140b55';g.beginPath();g.ellipse(u.x,GY+1,Math.max(12,w*.36),5,0,0,Math.PI*2);g.fill();}g.globalAlpha=al;g.translate(u.x+ox,GY+oy);g.rotate(rot);g.scale(sx,sy);
   const pal=u.team===1&&!u.pvp?(u.code==='O'?pl(MY.find(z=>z.id==='cornbar')):u.code==='C'?pl(MY.find(z=>z.id==='healthytooth')):(T._p||(T._p=cp(T.col,T.acc)))):(T.rainbow?{B:'hsl('+((S.t*75)%360)+',90%,58%)',S:'hsl('+((S.t*75+75)%360)+',95%,69%)',L:'hsl('+((S.t*75+155)%360)+',90%,80%)',Y:'hsl('+((S.t*75+225)%360)+',95%,65%)',O:'hsl('+((S.t*75+295)%360)+',95%,65%)'}:T.gold?{B:'#c98a14',S:'hsl(46,100%,'+(58+12*Math.sin(S.t*6))+'%)',L:'hsl(50,100%,'+(80+10*Math.sin(S.t*6+1))+'%)'}:(T._p||(T._p=pl(T))));
   if(T.sprite)drawUnitSprite(g,T,-w/2,-h,s,u.team===0);
-  else spr(grid,-w/2,-h,s,u.team===0,pal);
+  else spr(grid,-w/2,-h,s,u.team===0,u.hf>0&&ft===0?Object.assign({},pal,FLASH_PAL):pal);
   g.restore();
   if(ft===0&&u.sl>0){g.save();g.globalAlpha=0.28;g.fillStyle='#4aa3ff';g.beginPath();g.ellipse(u.x,GY-h/2+oy,w*0.7,h*0.65,0,0,7);g.fill();g.restore();txt('느림',u.x,GY-h-18,10);}
   if(ft===0&&u.team===1&&!u.pvp)txt(T.name+' '+T.ty.join('/')+(u.boss?' (BOSS)':''),u.x,GY-h-6,u.boss?13:10);
@@ -130,8 +135,7 @@ function draw(){
   g.clearRect(0,0,W,300);
   g.save();if(S.shake>0)g.translate((Math.random()-.5)*S.shake*14,(Math.random()-.5)*S.shake*10);
   bg();drawEnemyBase(10,150);drawCan(W-60,150);
-  txt(Math.ceil(S.en.hp)+' / '+S.en.max,35,128,14);
-  txt(Math.ceil(S.my.hp)+' / '+S.my.max,W-38,128,14);
+  castleHpText(Math.ceil(S.en.hp)+' / '+Math.round(S.en.max),Math.ceil(S.my.hp)+' / '+Math.round(S.my.max));
   for(const d of S.dust){const q=d.t/0.4;g.globalAlpha=0.5*(1-q);g.fillStyle='#efe3c4';g.fillRect(d.x-2-q*6,GY-3-q*9,4+q*6,3+q*2);}g.globalAlpha=1;
   for(const u of S.units)dsp(u,0);
   for(const f of S.fx)dsp(f.u,f.t);
@@ -160,7 +164,7 @@ function draw(){
     b.disabled=!!S.over;b._cd.style.height=cd>0?Math.min(100,cd/unitCooldown(u)*100)+'%':'0';b.classList.toggle('poor',S.money<Math.round(fm(u).cost*S.cm));});
 }
 $('c').addEventListener('click',()=>{if(!S||!S.over)return;
-  if(S.over==='win'){const wasVTS=!!S.vtsMode;cancelAnimationFrame(raf);S=null;if(wasVTS){buildVTSStages();show('vtsSelect');}else{buildGrid();show('select');}}else if(S.vtsMode)startVTSStage(stageIdx);else startStage(stageIdx);});
+  if(S.over==='win'){const wasVTS=!!S.vtsMode;cancelAnimationFrame(raf);S=null;if(wasVTS){buildVTSStages();show('vtsSelect');}else{buildGrid();show('select');}}else if(S.retry)S.retry();else if(S.vtsMode)startVTSStage(stageIdx);else startStage(stageIdx);});
 function loop(n){
   if(!S)return;
   // 모바일 30FPS 목표: 게임시간(dt)은 경과한 실제 시간을 사용해 전투 속도 유지.

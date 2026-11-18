@@ -1,12 +1,12 @@
 // 건우 대전쟁 · 08-world-navigation.js
 // ════════ 월드 선택 (로그인 직후) ════════
-const WORLDS=[{n:'세계편',i:'🌏',s:'3장 · 각 48스테이지',ok:true},{n:'미래편',i:'🚀',s:'3장 · 각 48스테이지',ok:true},{n:'VTS 시리즈',i:'👑',s:'5개 초고난도 스테이지 · 매일 전부 개방',ok:true},{n:'우주편',i:'🪐',s:'만드는 중',ok:false},{n:'레전드 스토리',i:'📜',s:'만드는 중',ok:false},{n:'건우 도장',i:'🥋',s:'친구와 프라이빗 대전',ok:true}];
+const WORLDS=[{n:'세계편',i:'🌏',s:'3장 · 각 48스테이지',ok:true},{n:'미래편',i:'🚀',s:'3장 · 각 48스테이지',ok:true},{n:'우주편',i:'🪐',s:'만드는 중',ok:false},{n:'레전드 스토리',i:'📜',s:'VTS 시리즈 · 경험치 스테이지',ok:true},{n:'건우 도장',i:'🥋',s:'친구와 프라이빗 대전',ok:true}];
 function buildWorld(){
   $('wdUser').textContent='👤'+(user?user.name:'게스트');
   const w=$('wgrid');w.innerHTML='';
   WORLDS.forEach(x=>{const b=document.createElement('button');b.className='wcard'+(x.ok?'':' wip');
     b.innerHTML='<span class="wi">'+x.i+'</span><b>'+x.n+'</b><small>'+(x.ok?x.s:'🚧 만드는 중이에요')+'</small>';
-    b.onclick=()=>{if(!x.ok){toast('🚧 '+x.n+'은(는) 아직 만드는 중이에요!');return;}if(x.n==='건우 도장'){show('dojo');return;}if(x.n==='VTS 시리즈'){buildVTSStages();show('vtsSelect');return;}if(x.n==='미래편'&&!cleared[47]){toast('세계편 1장 달을 클리어하면 미래편이 열립니다!');return;}CH=x.n==='미래편'?3:0;buildGrid();show('select');};w.appendChild(b);});
+    b.onclick=()=>{if(!x.ok){toast('🚧 '+x.n+'은(는) 아직 만드는 중이에요!');return;}if(x.n==='건우 도장'){show('dojo');return;}if(x.n==='레전드 스토리'){buildVTSStages();show('vtsSelect');return;}if(x.n==='미래편'&&!cleared[47]){toast('세계편 1장 달을 클리어하면 미래편이 열립니다!');return;}CH=x.n==='미래편'?3:0;buildGrid();show('select');};w.appendChild(b);});
 }
 // ── 적도감: 종류별 첫 조우를 계정에 저장
 function buildDex(){
@@ -15,7 +15,7 @@ function buildDex(){
   const box=$('dexList');box.innerHTML='';
   codes.forEach(code=>{
     const e=EN[code],known=!!seenEnemies[code],bt=document.createElement('button');bt.className='dex-item';
-    const cv=document.createElement('canvas'),scale=code==='O'||code==='C'?2:3,grid=code==='O'?CORN_EX:code==='C'?TOOTH_EX:TPL[e[7]];
+    const cv=document.createElement('canvas'),scale=code==='O'||code==='C'?2:3,grid=code==='O'?CORN_EX:code==='C'?TOOTH_EX:enemyGrid(code);
     cv.width=Math.max(...grid.map(row=>row.length))*scale;cv.height=grid.length*scale;
     if(known){spr(grid,0,0,scale,false,code==='O'?pl(MY.find(u=>u.id==='cornbar')):code==='C'?pl(MY.find(u=>u.id==='healthytooth')):cp(e[5],e[8]),cv.getContext('2d'));}else{const ctx=cv.getContext('2d');ctx.font='bold 26px sans-serif';ctx.fillStyle='#99a6ba';ctx.fillText('?',cv.width/2-7,cv.height/2+9);}
     const span=document.createElement('span');span.innerHTML='<b>'+(known?e[0]:'???')+'</b><small>'+(known?(ENTY[code].join(' / ')+' · '+(code==='F'?'세계편 1장 보스':code==='O'?'세계편 2장 보스':code==='C'?'세계편 3장 보스':'적 캐릭터')):'아직 발견하지 못한 적')+'</small>';

@@ -50,11 +50,11 @@ function showUnitInfo(k){
 }
 $('unitInfoClose').onclick=closeUnitInfo;
 $('unitInfoLayer').addEventListener('pointerdown',e=>{if(e.target===$('unitInfoLayer'))closeUnitInfo();});
-function buildSlots(){ // 짧게 누름 = 생산, 0.5초 길게 누름 = 캐릭터 정보
+function buildSlots(cm){ cm=cm==null?CHC[CH]:cm; // 짧게 누름 = 생산, 0.5초 길게 누름 = 캐릭터 정보
   const sl=$('slots');sl.innerHTML='';slotEls.length=0;
   SL=fl().map(id=>MY.findIndex(x=>x.id===id));
   for(let i=0;i<10;i++){const b=document.createElement('button');const u=MY[SL[i]];
-    if(u){b.appendChild(ico(u));const pr=document.createElement('span');pr.className='pr';pr.textContent=Math.round(fm(u).cost*CHC[CH])+'원';const cd=document.createElement('i');cd.className='cdv';b.append(pr,cd);b._pr=pr;b._cd=cd;}
+    if(u){b.appendChild(ico(u));const pr=document.createElement('span');pr.className='pr';pr.textContent=Math.round(fm(u).cost*cm)+'원';const cd=document.createElement('i');cd.className='cdv';b.append(pr,cd);b._pr=pr;b._cd=cd;}
     else b.disabled=true;
     let holdTimer=null,held=false,down=false,origin=null;
     function cancelHold(){clearTimeout(holdTimer);holdTimer=null;}
@@ -97,7 +97,7 @@ function startStage(i){
   S={t:0,money:Math.min(100,walletCapacity()),units:[],cool:MY.map(()=>0),over:null,boss:false,drop:'',drop2:'',fx:[],pop:[],cn:0,cnr:60,lid:0,pj:[],bm:[],dust:[],spk:[],ring:[],shake:0,bw:0,
      walM:1,rateM:incomeMultiplier(),tsd,cm:CHC[CH],future:CH>=3,maxM:1000,rate:14,
      my:{hp:1500*(1+basicProgress('baseHp'))*(1+0.3*futureTreasureProgress('f_base')),max:1500*(1+basicProgress('baseHp'))*(1+0.3*futureTreasureProgress('f_base'))},en:{hp:eh,max:eh},eSpawn:2,spawnN:0,mult:CHM[CH],wl:1};applyWk();
-  $('stageTitle').textContent=(CH>=3?'미래편 ':'세계편 ')+(CH%3+1)+'장 STAGE '+(i+1)+'  '+d[0];
+  $('stageTitle').textContent=(CH>=3?'미래편 ':'세계편 ')+(CH%3+1)+'장 STAGE '+(i+1)+'  '+d[0]+(CH>=3&&d[4]?'  ['+FUTURE_PATTERN_NAMES[d[4]]+']':'');
   show('battle');$('pmenu').classList.add('hide');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
 }
 function setPause(p){if(!S||S.over)return;S.paused=p;$('pmenu').classList.toggle('hide',!p);if(!p)last=performance.now();}
@@ -108,7 +108,7 @@ document.addEventListener('visibilitychange',()=>{if(document.hidden)setPause(tr
 function spawnMy(k){const T=fm(MY[k]),m=lm(T.id),h=T.hp*m*tnm(T.id,'hp');
   S.units.push({team:0,T:Object.assign({},T,{atk:T.atk*m*tnm(T.id,'atk'),speed:T.speed*tnm(T.id,'spd')}),x:W-80,hp:h,max:h,kbn:T.kb,nk:h-h/T.kb,t:0,kt:0,at:0,ph:Math.random()*3});}
 function spawnEn(code,boss){if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),scale=CH>=3?(ENTY[code].includes('에일리언')?futureAlienMult()*(CH===3?1:CH===4?1.25:1.55):1.15):WORLD_ENEMY_SCALE,h=e[1]*S.mult*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
-  S.units.push({team:1,boss,code,T:{name:e[0],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6],col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
+  S.units.push({team:1,boss,code,T:{name:e[0],grid:enemyGrid(code),float:!!ENEMY_FLOAT[code],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:enemyScale(code,boss?Math.ceil(e[6]*(code==='C'?1.6:code==='O'?1.55:1.45)):e[6]),col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
   if(boss){sfx('boss');S.shake=0.7;S.bw=1.4;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}} // 보스 등장: 아군 전체가 와르르 밀려나요
 }
 function deploy(k){

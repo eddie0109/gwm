@@ -29,6 +29,7 @@ function deco(g0,kinds){
     else if(k==='armor'){for(let y=mid-1;y<H-1;y++)for(let x=0;x<Wd;x++){const c=a[y][x],m={C:'M',B:'M',S:'W',L:'W',D:'N',H:'W'}[c];if(m)a[y][x]=m;}set(x1,top+1,'N');set(x2,top+1,'N');}
     else if(k==='cape'){for(let y=mid;y<H-1;y++)set(minX-1,y,'R');for(let y=mid+1;y<H-1;y++)set(minX-2,y,'R');set(minX-3,H-3,'R');}
     else if(k==='spikes'){for(let x=x1;x<=x2;x+=2)set(x,top-1,'M');}
+    else if(k==='antenna'){set(tc,top-1,'K');set(tc,top-2,'K');set(tc,top-3,'Y');set(tc-1,top-3,'Y');set(tc+1,top-3,'Y');set(tc,top-4,'Y');}
     else if(k==='ring'){for(let i=-3;i<=3;i++)set(tc+i,top-3,i===-3||i===3?'.':'Y');set(tc-3,top-2,'Y');set(tc+3,top-2,'Y');}
   });
   return a.map(r=>r.join('').replace(/\.+$/,''));

@@ -100,34 +100,46 @@ window.drawSteamTrainIcon=function(c,x,y,w,h,flip,skin){
 };
 
 // ── 전투 중 모션: 유닛 상태(이동 mv / 공격 at / 히트백 kt)에서 기관차 동작을 계산
-function addPuff(tr,u,f,lx,ly,r,vx,vy,life,gr,type){if(tr.P.length>60)return;tr.P.push({x:u.x+(lx-CX)*f,y:GY+ly,r,vx:vx*f,vy,life,max:life,g:gr||6,type:type||'s'});}
+// 공격 타임라인(ATK_T초): 멈추지 않고 달리던 그대로 앞으로 돌진 → IMPACT초에 충돌 → 반동 → 제자리
+const K=1.25;              // 전장 표시 배율 (조금 크게)
+const ATK_T=0.9,IMPACT=0.14;
+const WHEEL=5;             // 이동 중 바퀴 회전 속도 (느릴수록 묵직함)
+window.STEAM_TRAIN_TIMING={attack:ATK_T,impact:IMPACT};
+function addPuff(tr,u,f,lx,ly,r,vx,vy,life,gr,type){if(tr.P.length>60)return;tr.P.push({x:u.x+(lx-CX)*f*K,y:GY+ly*K,r:r*K,vx:vx*f*K,vy:vy*K,life,max:life,g:(gr||6)*K,type:type||'s'});}
 function enter(tr,u,f,s){
   tr.state=s;tr.st=0;tr.hitDone=false;tr.spawnT=0;
+  if(s==='attack')tr.attacked=true;
+  if(s==='move')tr.attacked=false;
   if(s==='hit'){tr.flash=1;const cx=tr.off+138,cy=tr.bob-70;
     for(let i=0;i<3;i++)addPuff(tr,u,f,cx+i*2,cy,4,-34+i*10,-46+i*5,1.1,9);
     for(let i=0;i<8;i++){const q=Math.random()*6.28,x=tr.off+100,y=tr.bob-50;addPuff(tr,u,f,x+Math.cos(q)*10,y+Math.sin(q)*10,0,Math.cos(q)*50,Math.sin(q)*50-30,0.55+Math.random()*0.25,0,'k');}}
 }
+const atkTime=u=>Math.max(0,(u.ad||ATK_T)-u.at)*(ATK_T/(u.ad||ATK_T));
 function step(tr,u,f,dt){
-  let s=u.kt>0?'hit':u.at>0?'attack':u.mv?'move':'idle';
-  if(u.fr>0){s='idle';dt=0;} // 정지 상태에서는 모션도 멈춤
+  // 공격 대기 모션은 한 번 공격한 뒤에만. 그 전에 멈춰 있으면 달리는 자세 유지
+  let s=u.kt>0?'hit':u.at>0?'attack':u.mv?'move':tr.attacked?'idle':'move';
+  if(u.fr>0){s=tr.state||'move';dt=0;} // 정지 상태에서는 모션도 멈춤
   if(s!==tr.state)enter(tr,u,f,s);
   tr.st+=dt;tr.t+=dt;if(tr.flash>0)tr.flash-=dt*5;
   let o=0,sl=0,b=0;const ckx=tr.off+138,cky=tr.bob-70;
   if(s==='move'){
-    tr.ang+=dt*8;b=Math.sin(tr.ang*2)>0.2?-1:0;
-    if(Math.floor(tr.ang/Math.PI)!==Math.floor((tr.ang-dt*8)/Math.PI))addPuff(tr,u,f,ckx,cky,3,-46,-16,1.4,7);
+    tr.ang+=dt*WHEEL;b=Math.sin(tr.ang*2)>0.2?-1:0;
+    if(Math.floor(tr.ang/Math.PI)!==Math.floor((tr.ang-dt*WHEEL)/Math.PI))addPuff(tr,u,f,ckx,cky,3,-40,-16,1.5,7);
   }else if(s==='idle'){
     b=Math.sin(tr.t*2.4)>0.45?1:0;tr.spawnT-=dt;
     if(tr.spawnT<0){tr.spawnT=0.8;addPuff(tr,u,f,ckx,cky,2,-6,-14,1.1,3);}
     if(Math.floor(tr.t/2.2)!==Math.floor((tr.t-dt)/2.2))for(let i=0;i<3;i++)addPuff(tr,u,f,tr.off+152,-10,2,26+i*8,-4-i*3,0.55,5);
-  }else if(s==='attack'){const T=Math.max(0,(u.ad||1.3)-u.at)*(1.3/(u.ad||1.3));
-    if(T<0.4){const k=T/0.4,e=1-(1-k)*(1-k);o=-12*e+(k>0.6?((Math.floor(T*50)%2)?1:-1):0);sl=-0.025*e;tr.ang-=dt*6;
-      tr.spawnT-=dt;if(tr.spawnT<0){tr.spawnT=0.045;addPuff(tr,u,f,ckx,cky,3+Math.random()*2,-12-Math.random()*14,-34-Math.random()*14,0.9,9);}
-    }else if(T<0.55){const k=(T-0.4)/0.15,e=k*k*k;o=-12+42*e;sl=0.015*e;tr.ang+=dt*45;
-      if(T>=0.52&&!tr.hitDone){tr.hitDone=true;tr.impact={t:0};tr.flash=0.6;if(S&&typeof S.shake==='number')S.shake=Math.max(S.shake,0.18);
-        for(let i=0;i<8;i++){const q=-1.2+i*0.35;addPuff(tr,u,f,o+184,-16,0,Math.cos(q)*70,Math.sin(q)*70-10,0.45,0,'k');}}
-    }else if(T<0.78){const k=(T-0.55)/0.23;o=30-5*(1-(1-k)*(1-k));tr.ang+=dt*8*(1-k);}
-    else{const k=Math.min(1,(T-0.78)/0.52),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;o=25*(1-e);tr.ang-=dt*6*(1-k);}
+  }else if(s==='attack'){const T=atkTime(u);
+    if(T<IMPACT){ // 1) 달리던 속도 그대로 가속하며 돌진 (멈춤·후진 없음)
+      const k=T/IMPACT,e=k*k;o=34*e;sl=0.02*e;tr.ang+=dt*(WHEEL+40*k);
+      tr.spawnT-=dt;if(tr.spawnT<0){tr.spawnT=0.03;addPuff(tr,u,f,ckx,cky,3+Math.random()*2,-50-Math.random()*20,-24-Math.random()*10,0.8,9);}
+    }else{
+      if(!tr.hitDone){tr.hitDone=true;tr.impact={t:0};tr.flash=0.6;if(S&&typeof S.shake==='number')S.shake=Math.max(S.shake,0.2);
+        for(let i=0;i<8;i++){const q=-1.2+i*0.35;addPuff(tr,u,f,34+184,-16,0,Math.cos(q)*70,Math.sin(q)*70-10,0.45,0,'k');}
+        for(let i=0;i<4;i++)addPuff(tr,u,f,34+150,-4,3,-30+i*8,-20-i*6,0.6,8,'d');}
+      if(T<0.36){const k=(T-IMPACT)/(0.36-IMPACT);o=34-8*Math.sin(k*Math.PI/2)+((Math.floor(T*60)%2)?1:-1)*(1-k);sl=-0.02*Math.sin(k*Math.PI);tr.ang+=dt*10*(1-k);}
+      else{const k=Math.min(1,(T-0.36)/(ATK_T-0.36)),e=k<0.5?2*k*k:1-Math.pow(-2*k+2,2)/2;o=26*(1-e);tr.ang-=dt*4*(1-k);}
+    }
   }else if(s==='hit'){const T=tr.st*2,k=Math.min(1,T/0.75); // 실제 밀려나는 거리는 전투 판정이 처리, 여기선 들림·번쩍임만
     sl=T<0.25?-0.16*Math.sin(T/0.25*Math.PI):-0.035*Math.sin((T-0.25)*14)*Math.exp(-(T-0.25)*5);
     b=-Math.round(Math.sin(Math.min(1,T/0.3)*Math.PI)*3);tr.ang-=dt*30*(1-k);
@@ -137,7 +149,7 @@ function step(tr,u,f,dt){
   let cx=0,cy=0;tr.canHurt=false;
   if(s==='move')cy=Math.sin(tr.ang*2+1)>0.2?-1:0;
   else if(s==='idle')cy=Math.sin(tr.t*2.4+0.8)>0.45?1:0;
-  else if(s==='attack'){const T=Math.max(0,(u.ad||1.3)-u.at)*(1.3/(u.ad||1.3));if(T<0.4)cx=-Math.round(2*Math.min(1,T/0.2));else if(T<0.55)cx=3;else if(T<0.78){cx=-2;cy=-1;}}
+  else if(s==='attack'){const T=atkTime(u);if(T<IMPACT)cx=-Math.round(3*T/IMPACT);else if(T<0.36){cx=3;cy=-2;}else if(T<0.5)cx=1;}
   else if(s==='hit'){const T=tr.st*2;cy=-Math.round(Math.sin(Math.min(1,T/0.35)*Math.PI)*5);cx=-Math.round(3*Math.min(1,T/0.15));tr.canHurt=T<0.6;}
   tr.canDx=cx;tr.canDy=cy;
   if(tr.impact){tr.impact.t+=dt;if(tr.impact.t>=0.45)tr.impact=null;}
@@ -163,12 +175,12 @@ window.drawSteamTrainUnit=function(c,u,ft){
   else step(tr,u,f,dt);
   const src=render({ang:tr.ang,canDx:tr.canDx,canDy:tr.canDy,canHurt:tr.canHurt,skin,mirror:f<0,flash:ft>0?0:tr.flash});
   c.save();c.imageSmoothingEnabled=false;
-  if(ft>0){const p=ft/0.6;c.globalAlpha=Math.max(0,1-p);c.translate(u.x-f*p*90,GY-Math.sin(p*Math.PI)*40+p*30);c.rotate(-f*p*0.9);}
+  if(ft>0){const p=ft/0.6;c.globalAlpha=Math.max(0,1-p);c.translate(u.x-f*p*110,GY-Math.sin(p*Math.PI)*40+p*30);c.rotate(-f*p*0.9);}
   else c.translate(u.x,GY);
-  c.scale(f,1);
+  c.scale(f*K,K);
   if(ft===0){c.fillStyle='rgba(0,0,0,0.3)';c.fillRect(tr.off-CX+12,1,166,2);
     if(T.aura){c.save();c.globalAlpha=0.16+0.08*Math.sin(tm*6);c.fillStyle=T.aura;c.beginPath();c.ellipse(tr.off-CX+95,-44,96,44,0,0,7);c.fill();c.restore();}}
-  if(u.at>0&&ft===0){const at=Math.max(0,(u.ad||1.3)-u.at)*(1.3/(u.ad||1.3));if(at>=0.36&&at<0.62){c.fillStyle='rgba(255,255,255,0.85)';
+  if(u.at>0&&ft===0){const at=atkTime(u);if(at<0.3){c.fillStyle='rgba(255,255,255,0.85)';
     for(let i=0;i<7;i++){const len=30+((i*13+Math.floor(at*60))%20);c.fillRect(tr.off-CX-len+14,tr.bob-64+i*9,len,1);}}}
   blit(c,src,tr.off-CX,-GYL+tr.bob,tr.slope,47);
   if(ft===0&&tr.impact){const k=tr.impact.t/0.45,x=tr.off-CX+184,y=-16;c.globalAlpha=1-k*0.6;const r=4+Math.round(k*28);
@@ -177,7 +189,7 @@ window.drawSteamTrainUnit=function(c,u,ft){
     c.globalAlpha=1;}
   c.restore();
   drawParticles(c,tr.P);
-  if(ft===0&&u.fr>0){c.save();c.globalAlpha=0.35;c.fillStyle='#9bdfff';c.fillRect(u.x-90,GY-80,180,80);c.restore();}
-  if(ft===0&&u.sl>0){c.save();c.globalAlpha=0.25;c.fillStyle='#4aa3ff';c.beginPath();c.ellipse(u.x,GY-40,90,44,0,0,7);c.fill();c.restore();}
+  if(ft===0&&u.fr>0){c.save();c.globalAlpha=0.35;c.fillStyle='#9bdfff';c.fillRect(u.x-112,GY-100,224,100);c.restore();}
+  if(ft===0&&u.sl>0){c.save();c.globalAlpha=0.25;c.fillStyle='#4aa3ff';c.beginPath();c.ellipse(u.x,GY-50,112,55,0,0,7);c.fill();c.restore();}
 };
 })();
