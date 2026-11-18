@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="css/01-base.css">
 <link rel="stylesheet" href="css/02-ui.css">
 <link rel="stylesheet" href="css/03-battlecats-theme.css">
-<link rel="stylesheet" href="css/04-features.css?v=20261117-vts">
-<link rel="stylesheet" href="css/05-private-battle.css">
+<link rel="stylesheet" href="css/04-features.css?v=20261118-train">
+<link rel="stylesheet" href="css/05-private-battle.css?v=20261118-train">
 </head>
 <body>
 <div id="game">
@@ -84,9 +84,10 @@
     <small>동일한 브라우저의 다른 탭이 아닌, 각각 별도 Firebase 계정으로 접속하세요.</small>
   </div>
   <div class="pvp-play hide" id="pvpPlay">
-    <div class="pvp-info"><span id="pvpOpponent"></span><span id="pvpMoney"></span></div>
-    <canvas id="pvpCanvas" width="800" height="295" aria-label="실시간 대전 화면"></canvas>
-    <div class="pvp-controls"><button id="pvpWorker">일꾼 강화</button><div id="pvpSlots"></div><button id="pvpCannon">대포 발사</button></div>
+    <div id="pvpWrap"><canvas id="pvpCanvas" width="800" height="300" aria-label="실시간 대전 화면"></canvas>
+      <div id="pvpHud"><button id="pvpQuit" type="button">나가기</button><b id="pvpOpponent"></b><span id="pvpMoney"></span></div>
+    </div>
+    <div id="pvpCtrl"><button id="pvpWorker" type="button"></button><div id="pvpSlots"></div><button id="pvpCannon" type="button"></button></div>
   </div>
 </section>
 <section id="battle" class="scr hide">
@@ -103,22 +104,23 @@
 <div id="toast" class="hide"></div>
 </div>
 <div id="rot">📱 기기를 가로로 돌려주세요 (가로 화면 전용 게임이에요)</div>
-<script src="js/01-core.js?v=20261117-vts"></script>
-<script src="js/02-sprites.js?v=20261117-vts"></script>
-<script src="js/03-traits.js?v=20261117-vts"></script>
-<script src="js/04-units.js?v=20261117-vts"></script>
-<script src="js/05-treasures.js?v=20261117-vts"></script>
-<script src="js/06-enemies-stages.js?v=20261117-vts"></script>
-<script src="js/07-save-login.js?v=20261117-vts"></script>
-<script src="js/08-world-navigation.js?v=20261117-vts"></script>
-<script src="js/09-stage-selection-formation.js?v=20261117-vts"></script>
-<script src="js/10-gacha.js?v=20261117-vts"></script>
-<script src="js/11-quests.js?v=20261117-vts"></script>
-<script src="js/12-upgrades.js?v=20261117-vts"></script>
-<script src="js/13-battle-controls.js?v=20261117-vts"></script>
-<script src="js/14-battle-logic.js?v=20261117-vts"></script>
-<script src="js/15-battle-graphics.js?v=20261117-vts"></script>
-<script src="js/16-private-battle.js?v=20261117-vts"></script>
-<script src="js/17-vts-series.js?v=20261117-vts"></script>
+<script src="js/01-core.js?v=20261118-train"></script>
+<script src="js/02-sprites.js?v=20261118-train"></script>
+<script src="js/02b-steam-train.js?v=20261118-train"></script>
+<script src="js/03-traits.js?v=20261118-train"></script>
+<script src="js/04-units.js?v=20261118-train"></script>
+<script src="js/05-treasures.js?v=20261118-train"></script>
+<script src="js/06-enemies-stages.js?v=20261118-train"></script>
+<script src="js/07-save-login.js?v=20261118-train"></script>
+<script src="js/08-world-navigation.js?v=20261118-train"></script>
+<script src="js/09-stage-selection-formation.js?v=20261118-train"></script>
+<script src="js/10-gacha.js?v=20261118-train"></script>
+<script src="js/11-quests.js?v=20261118-train"></script>
+<script src="js/12-upgrades.js?v=20261118-train"></script>
+<script src="js/13-battle-controls.js?v=20261118-train"></script>
+<script src="js/14-battle-logic.js?v=20261118-train"></script>
+<script src="js/15-battle-graphics.js?v=20261118-train"></script>
+<script src="js/16-private-battle.js?v=20261118-train"></script>
+<script src="js/17-vts-series.js?v=20261118-train"></script>
 </body>
 </html>

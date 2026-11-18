@@ -20,3 +20,29 @@
 #pvpCanvas{aspect-ratio:8/3;touch-action:manipulation}
 #pvpSlots button{touch-action:manipulation}
 .pvp-info{justify-content:space-between;font-size:14px}
+
+/* ===== 2026-11-18 · 세계편과 같은 전투 화면 (위 전장 960x360 / 아래 냥코 스타일 조작 패널) ===== */
+#privateBattle.playing{padding:0;gap:0;background:#18120b}
+#privateBattle.playing>.top{display:none}
+#privateBattle .pvp-play{flex:1;display:flex;flex-direction:column;gap:0;min-height:0}
+#pvpWrap{position:relative;height:360px;flex:none;background:#000;border-bottom:4px solid #24170d}
+#pvpCanvas{position:absolute;left:0;top:0;width:960px;height:360px;aspect-ratio:auto;border:0;border-radius:0;image-rendering:pixelated;background:#000;touch-action:manipulation}
+#pvpHud{position:absolute;left:0;right:0;top:0;display:flex;justify-content:space-between;align-items:flex-start;padding:7px 100px 0 9px;pointer-events:none}
+#pvpHud>*{pointer-events:auto}
+#pvpQuit{border:3px solid #25170c;border-bottom-width:5px;border-radius:6px;padding:4px 12px;font-size:.95rem;background:linear-gradient(#fff3a2,#f4a72c);color:#28170a}
+#pvpOpponent{position:absolute;left:0;right:0;top:9px;text-align:center;pointer-events:none;color:#fff3c6;font-weight:1000;text-shadow:2px 2px #000,-1px -1px #000,1px -1px #000,-1px 1px #000}
+#pvpMoney{font-size:1.9rem;font-weight:900;color:#ffdf49;-webkit-text-stroke:1px #271608;paint-order:stroke fill;text-shadow:2px 2px #000,-2px -2px #000,2px -2px #000,-2px 2px #000;pointer-events:none}
+#pvpCtrl{flex:1;min-height:0;display:grid;grid-template-columns:145px 1fr 145px;gap:7px;padding:7px 9px;background:linear-gradient(180deg,#f5d77f,#d99b3e);border-top:4px solid #24170d;box-shadow:inset 0 3px #fff7}
+#pvpWorker,#pvpCannon{height:100%;white-space:normal;padding:4px;border:4px solid #26170c;border-bottom-width:6px;border-radius:6px;background:linear-gradient(#fff0a0,#f7b93e 58%,#dc7622);color:#2a180a;font-size:1.03rem;line-height:1.35;font-weight:1000;text-shadow:0 1px #fff9;box-shadow:inset 0 2px #fff9,0 3px 0 #99551b,2px 4px 0 #26170c}
+#pvpCannon{background:linear-gradient(#ffdc91,#f58a38 58%,#c64a25);color:#2b170a}
+#pvpWorker small,#pvpCannon small{font-weight:600;opacity:.8}
+#pvpWorker:disabled,#pvpCannon:disabled{filter:grayscale(.6) brightness(.85)}
+#pvpSlots{display:grid;grid-template-columns:repeat(5,1fr);grid-template-rows:1fr 1fr;gap:5px;min-height:0}
+#pvpSlots button{position:relative;overflow:hidden;padding:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;min-height:0;font-size:inherit;line-height:1.2;
+  border:3px solid #2b1a0d;border-bottom-width:5px;border-radius:5px;background:linear-gradient(#fff0c5,#e8bd68 72%,#c98a38);color:#26170b;text-shadow:none;box-shadow:inset 0 2px #fff9,0 2px 0 #9b6527,2px 3px 0 #26170c;touch-action:none;-webkit-user-select:none;user-select:none}
+#pvpSlots button:disabled{opacity:.48;filter:grayscale(.85)}
+#pvpSlots canvas{max-height:50px;max-width:80%;width:auto;height:auto;image-rendering:pixelated;filter:drop-shadow(1px 3px 0 #22160b80) drop-shadow(0 0 1px #27180c)}
+#pvpSlots .pr{font-weight:1000;font-size:.95rem;color:#b23a16;text-shadow:1px 1px #fff,-1px -1px #fff,1px -1px #fff,-1px 1px #fff}
+#pvpSlots .cdv{position:absolute;left:0;right:0;top:0;height:0;background:#24170dcc;pointer-events:none}
+#pvpSlots button.poor .pr{color:#777}
+@media (max-width:700px){#pvpCtrl{grid-template-columns:125px 1fr 125px}#pvpSlots{gap:3px}}

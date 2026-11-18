@@ -1,5 +1,5 @@
 // 건우 대전쟁 · 14-battle-logic.js
-const AD={tent:.5,beam:.35,fire:.4,burst:.45,smash:.6,claw:.3,slash:.35};
+const AD={train:1.3,tent:.5,beam:.35,fire:.4,burst:.45,smash:.6,claw:.3,slash:.35};
 const CHXP=[1,1.5,2.5,2.2,3.3,4.5];
 function update(dt){
   if(S.over)return;
@@ -13,6 +13,7 @@ function update(dt){
     spawnEn(pool[S.spawnN%pool.length],false);S.spawnN++;
     S.eSpawn=boss.interval;
   }
+  if(S.vtsMode)vtsBossTick(dt);
   if(!S.vtsMode&&S.eSpawn<=0&&S.units.filter(u=>u.team===1).length<12){
     const list=d[3];const code=CH>=3?list[Math.min(list.length-1,Math.floor(S.spawnN/2))]:list[Math.floor(Math.random()*list.length)];spawnEn(code,false);S.spawnN++;
     S.eSpawn=CH>=3?(3.0+Math.random()*1.4):(4.8+Math.random()*1.7);
@@ -25,16 +26,17 @@ function update(dt){
   for(const u of S.units){
     const dir=u.team===0?-1:1,sf=u.sl>0?0.22:1;if(u.sl>0)u.sl=Math.max(0,u.sl-dt);if(u.fr>0){u.fr=Math.max(0,u.fr-dt);u.at=0;u.mv=0;continue;}u.t-=dt*sf;u.at=Math.max(0,u.at-dt);u.mv=0;if(u.hp<=0)continue;
     if(u.pend!=null){u.pend-=dt;if(u.pend<=0){u.pend=null;for(const o of S.units)if(o.team!==u.team&&o.hp>0&&Math.abs(o.x-u.tx)<=55){hitT(u,o,u.T.atk);if(o.hp>0&&o.kt<=0){o.kt=0.35;o.t=Math.max(o.t,0.6);}}if(u.bt){(u.team===0?S.en:S.my).hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);u.bt=0;}}}
-    if(u.kt>0){u.kt-=dt;u.x=Math.max(60,Math.min(W-60,u.x-dir*(u.kv||160)*dt));if(u.kt<=0)u.kv=0;continue;}
+    if(u.kt>0){u.dh=0;u.kt-=dt;u.x=Math.max(60,Math.min(W-60,u.x-dir*(u.kv||160)*dt));if(u.kt<=0)u.kv=0;continue;}
     let target=null,best=1e9;
     for(const o of S.units){if(o.team===u.team||o.hp<=0)continue;const dd=(o.x-u.x)*dir;if(dd>-10&&dd<best){best=dd;target=o;}}
     const baseX=u.team===0?75:W-75,bd=(baseX-u.x)*dir,bs=u.team===0?S.en:S.my,R=u.T.range;
+    if(u.dh>0){u.dh-=dt;if(u.dh<=0){u.dh=0;strike(u,dir,target,best,bd,bs,R);}continue;}
     let vt=null,b2=1e9;if(u.T.leap){for(const o of S.units){if(o.team===u.team||o.hp<=0)continue;const dd=(o.x-u.x)*dir;if(dd>=u.T.minR&&dd<=R&&dd<b2){b2=dd;vt=o;}}}
     if((target&&best<=R)||bd<=R){
       if(u.T.leap){if(u.t<=0&&(vt||(bd>=u.T.minR&&bd<=R))){u.t=u.T.cd;u.ad=1;u.at=1;u.pend=0.4;if(vt){u.tx=vt.x;u.bt=0;}else{u.tx=baseX;u.bt=1;}}}
       else if(u.t<=0){u.t=u.T.cd;u.ad=Math.min(AD[u.T.an]||0.35,u.T.cd*0.8);u.at=u.ad;
-        if(u.T.area){for(const o of S.units){if(o.team!==u.team&&o.hp>0){const dd=(o.x-u.x)*dir;if(dd>-10&&dd<=R)hitT(u,o,u.T.atk);}}if(bd<=R)bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);}
-        else if(target&&best<=R)hitT(u,target,u.T.atk);else bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);}
+        if(u.T.hitDelay)u.dh=u.T.hitDelay; // 기관차: 돌진이 닿는 순간에 판정
+        else strike(u,dir,target,best,bd,bs,R);}
     }else{ // 이동: 걷기 모션 + 먼지
       u.mv=1;u.x+=dir*u.T.speed*sf*dt;
     }
@@ -70,10 +72,18 @@ function update(dt){
   else if(S.my.hp<=0){S.over='lose';sfx('lose');}
 }
 
+function strike(u,dir,target,best,bd,bs,R){
+  if(u.T.area){for(const o of S.units){if(o.team!==u.team&&o.hp>0){const dd=(o.x-u.x)*dir;if(dd>-10&&dd<=R)hitT(u,o,u.T.atk);}}if(bd<=R)bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);}
+  else if(target&&best<=R&&target.hp>0)hitT(u,target,u.T.atk);else if(bd<=R)bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);
+}
 function hit(o,d){sfxHit();o.hp-=d;if(S.spk.length<70)for(let j=0;j<4;j++)S.spk.push({x:o.x+(Math.random()-.5)*18,y:GY-8-Math.random()*46,t:0,seed:Math.random(),col:j%2?'#81e6ff':'#ffe376'});
   if(o.hp>0&&o.hp<=o.nk){while(o.hp<=o.nk)o.nk-=o.max/o.kbn;o.kt=0.35;o.t=Math.max(o.t,0.6);}} // 히트백
 function hitT(a,o,d){
-  const affinity=tmul(a.T.ty[0],o.T.ty);
+  // 공격 무효(VTS 준치): 일정 확률로 피해와 상태이상을 모두 막음
+  if(o.T.dodge&&Math.random()<o.T.dodge){if(!S.pop.some(p=>p.t<0.25&&Math.abs(p.x-o.x)<30))S.pop.push({x:o.x,t:0,s:'무효!',c:'#d8b3ff'});return;}
+  // 에일리언 특효(증기기관차 건우통): 속성 상성 대신 정확히 alienMult배
+  const alienHit=!!(a.T.alienMult&&o.T.ty.includes('에일리언'));
+  const affinity=alienHit?a.T.alienMult:tmul(a.T.ty[0],o.T.ty);
   // 적 속성이 보물의 대상. 기존 속성 상성(×2/×0.5)과 별도로 모든 공격에 적용.
   const treasureMult=a.team===0
     ?treasureOutgoingMult(o.T.ty,S.tsd)
@@ -83,7 +93,8 @@ function hitT(a,o,d){
   const fruitEffect=affinity>1?1+0.2*fruit:affinity<1?1-0.2*fruit:1;
   hit(o,d*affinity*treasureMult*fruitEffect);
   if(affinity!==1&&!S.pop.some(p=>p.t<0.3&&Math.abs(p.x-o.x)<30))
-    S.pop.push({x:o.x,t:0,s:affinity>1?'효과 굉장!':'효과 별로…',c:affinity>1?'#ffe27a':'#9fb3c8'});
+    S.pop.push({x:o.x,t:0,s:alienHit?'에일리언 특효 ×'+a.T.alienMult+'!':affinity>1?'효과 굉장!':'효과 별로…',c:affinity>1?'#ffe27a':'#9fb3c8'});
+  if(a.T.freezeAll){o.fr=Math.max(o.fr||0,a.T.freezeTime||3);if(!S.pop.some(p=>p.s==='정지!'&&p.t<0.2))S.pop.push({x:o.x,t:0,s:'정지!',c:'#9bdfff'});} // 확정 정지
   if(affinity>1&&a.T.slowS)o.sl=3*(1+0.4*(a.team===0?futureFruitProgress(o.T.ty):0)); // 황소개구리: 강한 속성의 적은 3초 슬로우
   if(a.T.slowOnHit)o.sl=Math.max(o.sl||0,a.T.slowOnHit); // 2장 보스: 맞은 아군은 누구든 느려짐
   if(((affinity>1&&a.T.freezeStrong&&Math.random()<a.T.freezeStrong)||(a.T.freezeNeutral&&o.T.ty.includes('무속성')&&Math.random()<a.T.freezeNeutral))){o.fr=Math.max(o.fr||0,(a.T.freezeTime||2)*(1+0.4*(a.team===0?futureFruitProgress(o.T.ty):0)));if(!S.pop.some(p=>p.s==='정지!'&&p.t<0.2))S.pop.push({x:o.x,t:0,s:'정지!',c:'#9bdfff'});}

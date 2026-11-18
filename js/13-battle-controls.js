@@ -32,6 +32,10 @@ function showUnitInfo(k){
   special.push(u.area?'범위 공격: 사거리 안의 여러 적 공격':'단일 공격: 한 번에 적 하나 공격');
   if(u.leap)special.push('원거리 도약 공격: 가까운 적은 공격하지 못함 (최소 사거리 '+u.minR+')');
   if(u.slowS)special.push('느리게: 강한 속성의 적에게 공격이 적중하면 3초 동안 이동·공격 속도 크게 감소');if(u.freezeStrong)special.push('정지: 강한 속성의 적에게 '+Math.round(u.freezeStrong*100)+'% 확률로 '+u.freezeTime+'초 정지');if(u.freezeNeutral)special.push('정지: 무속성 적에게만 '+Math.round(u.freezeNeutral*100)+'% 확률로 '+u.freezeTime+'초 정지');
+  if(u.alienMult)special.push('에일리언 특효: 에일리언 적에게 '+u.alienMult+'배 데미지');
+  if(u.kb>=5)special.push('히트백 '+u.kb+'회: 체력이 '+u.kb+'번 깎일 때마다 한 번씩만 밀려남');
+  if(u.dodge)special.push('공격 무효: 모든 적의 공격을 '+Math.round(u.dodge*100)+'% 확률로 무효화');
+  if(u.hitDelay)special.push('돌진 공격: 증기를 모은 뒤 들이받는 순간 피해 (도중에 밀려나면 공격 취소)');
   if(u.float)special.push('부유하는 외형 (추가 전투 보너스 없음)');
   const desc=(base.desc||'').replaceAll('&','&amp;').replaceAll('<','&lt;').replaceAll('>','&gt;');
   const body=$('unitInfoBody');
