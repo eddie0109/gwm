@@ -20,7 +20,7 @@ function applyData(d){const m=d.meta||{};cleared=d.clear||{};trc=d.trc||{};
   basicLv=Object.assign({wallet:1,worker:1,research:1,accounting:1,baseHp:1,cannon:1},m.basicLv||{});
   tk=m.tk===undefined?2:+m.tk||0;em=+m.em||0;rt=m.rt===undefined?1:+m.rt||0;own=m.own||{};fsel=m.fsel||{};tn=m.tn||{};form=Array.isArray(m.form)?m.form:[];qc=m.qc||{};
   qs=Object.assign({wins:0,kills:0,cn:0,wk:1,ga:0},m.qs||{});seenEnemies=m.seenEnemies||{};vtsCleared=m.vtsCleared||{};daily=Object.assign({last:'',streak:0,total:0,history:[]},m.daily||{});energy=Object.assign({value:100,updated:Date.now()},m.energy||{});mig=m.mig||{};migrateFutureTreasures();grantClearedRewards();resetVTSOnce();}
-// 2026-11-18: VTS 캐릭터 1회 초기화 (레전드 스토리 이전). 이미 가진 VTS 캐릭터·레벨·강화·편성·클리어 기록을 지우고 다시 획득하도록 합니다.
+// 2026-11-18: VTS 캐릭터 1회 초기화 (건우 스토리 이전). 이미 가진 VTS 캐릭터·레벨·강화·편성·클리어 기록을 지우고 다시 획득하도록 합니다.
 function resetVTSOnce(){if(mig.vtsReset1)return;
   for(const u of MY)if(u.id.startsWith('vts_')){delete own[u.id];delete lv[u.id];delete plusLv[u.id];delete tn[u.id];delete fsel[u.id];}
   form=form.filter(id=>!String(id).startsWith('vts_'));vtsCleared={};mig.vtsReset1=1;}

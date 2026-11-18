@@ -1,5 +1,5 @@
 // 건우 대전쟁 · 14-battle-logic.js
-const AD={train:.9,tent:.5,beam:.35,fire:.4,burst:.45,smash:.6,claw:.3,slash:.35};
+const AD={spin:.45,zap:.45,spike:.5,pierce:.42,water:.7,snip:.5,train:.9,tent:.5,beam:.35,fire:.4,burst:.45,smash:.6,claw:.3,slash:.35};
 const CHXP=[1,1.5,2.5,2.2,3.3,4.5];
 function update(dt){
   if(S.over)return;
@@ -17,7 +17,7 @@ function update(dt){
   if(!S.vtsMode&&S.eSpawn<=0&&S.units.filter(u=>u.team===1).length<12){
     const list=d[3];
     if(CH>=3){futureSpawn(d);}
-    else{spawnEn(list[Math.floor(Math.random()*list.length)],false);S.spawnN++;S.eSpawn=4.8+Math.random()*1.7;}
+    else{spawnEn(list[Math.floor(S.rng()*list.length)],false);S.spawnN++;S.eSpawn=4.8+S.rng()*1.7;}
   }
   for(const p of S.pj)p.t+=dt;
   for(const p of S.pj)if(p.t>=p.dur){p.done=1;const dm=150*S.mult*(1+basicProgress('cannon'))*(1+0.4*futureTreasureProgress('f_cannon'));
@@ -104,11 +104,11 @@ function hitT(a,o,d){
 // 미래편 스테이지 패턴: 스테이지마다 적 조합과 출현 방식이 달라요 (06-enemies-stages.js의 makeFutureStage 참고)
 function futureSpawn(d){
   const list=d[3],pat=d[4]||'mixed',aliens=[...list].filter(c=>ENTY[c]&&ENTY[c].includes('에일리언')),fill=[...list].filter(c=>!aliens.includes(c));
-  const pick=a=>a[Math.floor(Math.random()*a.length)];
+  const pick=a=>a[Math.floor(S.rng()*a.length)];
   const any=()=>pick(list);
-  if(pat==='rush'){const n=S.spawnN%4===3?3:1;for(let k=0;k<n;k++)spawnEn(aliens.length?pick(aliens):any(),false);S.spawnN++;S.eSpawn=S.spawnN%4===0?5.5:1.9+Math.random()*0.6;}
-  else if(pat==='tank'){spawnEn(aliens.length&&Math.random()<0.75?pick(aliens.slice(-2)):any(),false);S.spawnN++;S.eSpawn=5.2+Math.random()*1.5;}
-  else if(pat==='swarm'){spawnEn(fill.length&&Math.random()<0.6?pick(fill):any(),false);S.spawnN++;S.eSpawn=1.8+Math.random()*0.9;}
+  if(pat==='rush'){const n=S.spawnN%4===3?3:1;for(let k=0;k<n;k++)spawnEn(aliens.length?pick(aliens):any(),false);S.spawnN++;S.eSpawn=S.spawnN%4===0?5.5:1.9+S.rng()*0.6;}
+  else if(pat==='tank'){spawnEn(aliens.length&&S.rng()<0.75?pick(aliens.slice(-2)):any(),false);S.spawnN++;S.eSpawn=5.2+S.rng()*1.5;}
+  else if(pat==='swarm'){spawnEn(fill.length&&S.rng()<0.6?pick(fill):any(),false);S.spawnN++;S.eSpawn=1.8+S.rng()*0.9;}
   else if(pat==='wave'){const n=1+Math.floor(S.spawnN/5)%3;for(let k=0;k<n;k++)spawnEn(any(),false);S.spawnN++;S.eSpawn=S.spawnN%5===0?7:2.8;}
-  else{spawnEn(any(),false);S.spawnN++;S.eSpawn=3.0+Math.random()*1.4;}
+  else{spawnEn(any(),false);S.spawnN++;S.eSpawn=3.0+S.rng()*1.4;}
 }
