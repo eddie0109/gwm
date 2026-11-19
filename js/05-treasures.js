@@ -17,7 +17,7 @@ const hasTreasure=(chapter,item)=>!!trc[treasureKey(chapter,item)];
 const treasureCount=(chapter,items)=>items.filter(item=>hasTreasure(chapter,item)).length;
 const setDone=(chapter,set)=>treasureCount(chapter,set.items)===set.items.length;
 const treasureStage=(item)=>ALLT.indexOf(item)%48;
-const stageTreasure=(chapter,stage)=>chapter>=3?FUTURE_ITEMS.filter((item,i)=>i%48===stage):ALLT.filter(item=>treasureStage(item)===stage);
+const stageTreasure=(chapter,stage)=>chapter>=6?[]:chapter>=3?FUTURE_ITEMS.filter((item,i)=>i%48===stage):ALLT.filter(item=>treasureStage(item)===stage);
 const totalTreasure=()=>[0,1,2].reduce((n,c)=>n+ALLT.filter(t=>hasTreasure(c,t)).length,0);
 const economicProgress=(setIndex)=>[0,1,2].reduce((n,c)=>n+treasureCount(c,TSETS[setIndex].items),0)/12;
 // 해당 속성의 보물 12개 가운데 획득한 비율 (각 장 4개)

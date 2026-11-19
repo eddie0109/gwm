@@ -1,6 +1,6 @@
 // 건우 대전쟁 · 14-battle-logic.js
 const AD={spin:.45,zap:.45,spike:.5,pierce:.42,water:.7,snip:.5,train:.9,tent:.5,beam:.35,fire:.4,burst:.45,smash:.6,claw:.3,slash:.35};
-const CHXP=[1,1.5,2.5,2.2,3.3,4.5];
+const CHXP=[1,1.5,2.5,2.2,3.3,4.5,3.5,5,7];
 function update(dt){
   if(S.over)return;
   const d=S.vtsMode?['VTS 전투',0,null,[]]:STS[CH][stageIdx];
@@ -25,18 +25,20 @@ function update(dt){
     S.bm.push({x:p.tx,t:0});}
   S.pj=S.pj.filter(p=>!p.done);S.bm.forEach(b=>b.t+=dt);S.bm=S.bm.filter(b=>b.t<0.5);
   for(const u of S.units){
-    const dir=u.team===0?-1:1,sf=u.sl>0?0.22:1;if(u.sl>0)u.sl=Math.max(0,u.sl-dt);if(u.fr>0){u.fr=Math.max(0,u.fr-dt);u.at=0;u.mv=0;continue;}u.t-=dt*sf;u.at=Math.max(0,u.at-dt);if(u.hf>0)u.hf-=dt;u.mv=0;if(u.hp<=0)continue;
+    const dir=u.team===0?-1:1,sf=u.sl>0?0.22:1;if(u.sl>0)u.sl=Math.max(0,u.sl-dt);if(u.fr>0){u.fr=Math.max(0,u.fr-dt);u.at=0;u.mv=0;continue;}u.t-=dt*sf;u.at=Math.max(0,u.at-dt);if(u.hf>0)u.hf-=dt;if(u.wk>0)u.wk-=dt;u.mv=0;if(u.hp<=0)continue;
     if(u.pend!=null){u.pend-=dt;if(u.pend<=0){u.pend=null;for(const o of S.units)if(o.team!==u.team&&o.hp>0&&Math.abs(o.x-u.tx)<=55){hitT(u,o,u.T.atk);}if(u.bt){(u.team===0?S.en:S.my).hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);u.bt=0;}}}
-    if(u.kt>0){u.dh=0;u.kt-=dt;u.x=Math.max(60,Math.min(W-60,u.x-dir*(u.kv||160)*dt));if(u.kt<=0){u.kv=0;if(u.T.kbRecover)u.t=0;}continue;} // kbRecover: 히트백 직후 바로 공격
+    if(u.kt>0){u.dh=0;u.hq=null;u.kt-=dt;u.x=Math.max(60,Math.min(W-60,u.x-dir*(u.kv||160)*dt));if(u.kt<=0){u.kv=0;if(u.T.kbRecover)u.t=0;}continue;} // kbRecover: 히트백 직후 바로 공격
     let target=null,best=1e9;
     for(const o of S.units){if(o.team===u.team||o.hp<=0)continue;const dd=(o.x-u.x)*dir;if(dd>-10&&dd<best){best=dd;target=o;}}
     const baseX=u.team===0?75:W-75,bd=(baseX-u.x)*dir,bs=u.team===0?S.en:S.my,R=u.T.range;
     if(u.dh>0){u.dh-=dt;if(u.dh<=0){u.dh=0;strike(u,dir,target,best,bd,bs,R);}continue;}
+    if(u.hq&&u.hq.length){u.ht+=dt;while(u.hq.length&&u.ht>=u.hq[0]){u.hq.shift();strike(u,dir,target,best,bd,bs,R);}continue;} // 필쌤 다단 히트
     let vt=null,b2=1e9;if(u.T.leap){for(const o of S.units){if(o.team===u.team||o.hp<=0)continue;const dd=(o.x-u.x)*dir;if(dd>=u.T.minR&&dd<=R&&dd<b2){b2=dd;vt=o;}}}
     if((target&&best<=R)||bd<=R){
       if(u.T.leap){if(u.t<=0&&(vt||(bd>=u.T.minR&&bd<=R))){u.t=u.T.cd;u.ad=1;u.at=1;u.pend=0.4;if(vt){u.tx=vt.x;u.bt=0;}else{u.tx=baseX;u.bt=1;}}}
-      else if(u.t<=0){u.t=u.T.cd;u.ad=Math.min(AD[u.T.an]||0.35,u.T.cd*0.8);u.at=u.ad;
-        if(u.T.hitDelay)u.dh=u.T.hitDelay; // 기관차: 돌진이 닿는 순간에 판정
+      else if(u.t<=0){u.t=u.T.cd;u.ad=u.T.adFix||Math.min(AD[u.T.an]||0.35,u.T.cd*0.8);u.at=u.ad;
+        if(u.T.hitTimes){u.hq=u.T.hitTimes.slice();u.ht=0;}
+        else if(u.T.hitDelay)u.dh=u.T.hitDelay; // 기관차: 돌진이 닿는 순간에 판정
         else strike(u,dir,target,best,bd,bs,R);}
     }else{ // 이동: 걷기 모션 + 먼지
       u.mv=1;u.x+=dir*u.T.speed*sf*dt;
@@ -55,7 +57,8 @@ function update(dt){
   }else{const first=!cleared[ck(stageIdx)];
     const gx=Math.round((300+stageIdx*60+stageIdx*stageIdx*3)*CHXP[CH]*(first?1:0.2));xp+=gx;qs.wins++;S.xpg=gx;
     const left=stageTreasure(CH,stageIdx).filter(t=>!hasTreasure(CH,t));
-    if(!left.length){S.drop='이 스테이지의 보물은 이미 획득했어요!';}
+    if(isMathCH(CH)){const gem=stageIdx===23?100:stageIdx===11?30:10;if(first)em+=gem;S.drop=first?'수학편 첫 클리어 보상 💎'+gem:'수학편 재도전 클리어!';}
+    else if(!left.length){S.drop='이 스테이지의 보물은 이미 획득했어요!';}
     else if(Math.random()<0.5){ // 매번 승리할 때 독립적으로 50% 확률
       const t=left[Math.floor(Math.random()*left.length)];trc[treasureKey(CH,t)]=1;
       const st=(CH>=3?F_TSETS:TSETS).find(s=>s.items.includes(t));
@@ -68,6 +71,7 @@ function update(dt){
       if(CH===1&&stageIdx===47&&!own.cornbar){own.cornbar=1;S.drop2='EX 캐릭터 획득: 옥수수익어가는바!';}
       if(CH===2&&stageIdx===47&&!own.healthytooth){own.healthytooth=1;S.drop2='EX 캐릭터 획득: 건치!';}
        if(CH>=3&&stageIdx===47){S.drop2=['격투가 강철','옥수수익어가는바','건치'][CH-3]+' EX 3형 해금! (해당 유닛 XP Lv20 필요)';}
+      if(isMathCH(CH)&&stageIdx===23)S.drop2='필쌤 격파! 수학편 '+(CH-5)+'장 클리어'+(CH<8?' · '+(CH-4)+'장 해금!':' · 수학편 완주!');
       if(stageIdx===47)S.drop2=(S.drop2?S.drop2+' / ':'')+(CH===0?'세계편 2장 · 미래편 해금!':CH===1?'세계편 3장 · Lv20 해금!':CH===2?'Lv30 해금!':CH===3?'미래편 2장 해금!':CH===4?'미래편 3장 해금!':'미래편 완주!');}
     grantClearedRewards();save();}}
   else if(S.my.hp<=0){S.over='lose';sfx('lose');}
@@ -83,6 +87,7 @@ function hitT(a,o,d){
   // 공격 무효(VTS 준치): 일정 확률로 피해와 상태이상을 모두 막음
   if(o.T.dodge&&Math.random()<o.T.dodge){if(!S.pop.some(p=>p.t<0.25&&Math.abs(p.x-o.x)<30))S.pop.push({x:o.x,t:0,s:'무효!',c:'#d8b3ff'});return;}
   // 에일리언 특효(증기기관차 건우통): 속성 상성 대신 정확히 alienMult배
+  if(a.wk>0)d*=0.5; // 빨간펜 채점 상태
   const alienHit=!!(a.T.alienMult&&o.T.ty.includes('에일리언'));
   const affinity=alienHit?a.T.alienMult:tmul(a.T.ty[0],o.T.ty);
   // 적 속성이 보물의 대상. 기존 속성 상성(×2/×0.5)과 별도로 모든 공격에 적용.
@@ -95,6 +100,7 @@ function hitT(a,o,d){
   hit(o,d*affinity*treasureMult*fruitEffect);
   if(affinity!==1&&!S.pop.some(p=>p.t<0.3&&Math.abs(p.x-o.x)<30))
     S.pop.push({x:o.x,t:0,s:alienHit?'에일리언 특효 ×'+a.T.alienMult+'!':affinity>1?'효과 굉장!':'효과 별로…',c:affinity>1?'#ffe27a':'#9fb3c8'});
+  if(a.T.redPen&&a.team===1){o.wk=a.T.redPen;if(!S.pop.some(p=>p.s==='채점 ✗'&&p.t<0.3))S.pop.push({x:o.x,t:0,s:'채점 ✗',c:'#ff5a4a'});} // 빨간펜: 공격력 50% 감소
   if(a.T.freezeAll){o.fr=Math.max(o.fr||0,a.T.freezeTime||3);if(!S.pop.some(p=>p.s==='정지!'&&p.t<0.2))S.pop.push({x:o.x,t:0,s:'정지!',c:'#9bdfff'});} // 확정 정지
   if(affinity>1&&a.T.slowS)o.sl=3*(1+0.4*(a.team===0?futureFruitProgress(o.T.ty):0)); // 황소개구리: 강한 속성의 적은 3초 슬로우
   if(a.T.slowOnHit)o.sl=Math.max(o.sl||0,a.T.slowOnHit); // 2장 보스: 맞은 아군은 누구든 느려짐

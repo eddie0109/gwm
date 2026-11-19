@@ -50,12 +50,14 @@ function showUnitInfo(k){
 }
 $('unitInfoClose').onclick=closeUnitInfo;
 $('unitInfoLayer').addEventListener('pointerdown',e=>{if(e.target===$('unitInfoLayer'))closeUnitInfo();});
-function buildSlots(cm){ cm=cm==null?CHC[CH]:cm; // 짧게 누름 = 생산, 0.5초 길게 누름 = 캐릭터 정보
+let curRule='';
+function buildSlots(cm){ const rule=cm==null?curRule:''; cm=cm==null?CHC[CH]:cm; // 짧게 누름 = 생산, 0.5초 길게 누름 = 캐릭터 정보
   const sl=$('slots');sl.innerHTML='';slotEls.length=0;
   SL=fl().map(id=>MY.findIndex(x=>x.id===id));
   for(let i=0;i<10;i++){const b=document.createElement('button');const u=MY[SL[i]];
     if(u){b.appendChild(ico(u));const pr=document.createElement('span');pr.className='pr';pr.textContent=Math.round(fm(u).cost*cm)+'원';const cd=document.createElement('i');cd.className='cdv';b.append(pr,cd);b._pr=pr;b._cd=cd;}
     else b.disabled=true;
+    if(u&&!ruleAllows(rule,u,i)){b.disabled=true;b.classList.add('banned');b.title='출격 조건 때문에 이 스테이지에서는 출격할 수 없어요';}
     let holdTimer=null,held=false,down=false,origin=null;
     function cancelHold(){clearTimeout(holdTimer);holdTimer=null;}
     b.addEventListener('pointerdown',e=>{
@@ -90,14 +92,15 @@ function renderSpeedToggle(){
 $('speedToggle').onclick=()=>{speedUp=!speedUp;renderSpeedToggle();};
 function startStage(i){
   if(i>0&&!cleared[ck(i-1)]){toast('아직 열리지 않은 스테이지예요.');return;}
-  if(CH>=3){if(currentEnergy()<1){toast('기력이 부족해요. 타임머신 보물을 모으면 회복이 빨라져요.');return;}energy.value--;save();}
-  stageIdx=i;$('unitInfoLayer').classList.add('hide');speedUp=false;renderSpeedToggle();const d=STS[CH][i];buildSlots();
+  if(CH>=3&&CH<6){if(currentEnergy()<1){toast('기력이 부족해요. 타임머신 보물을 모으면 회복이 빨라져요.');return;}energy.value--;save();}
+  stageIdx=i;$('unitInfoLayer').classList.add('hide');speedUp=false;renderSpeedToggle();const d=STS[CH][i];curRule=isMathCH(CH)?d[5]||'':'';buildSlots();
   const eh=Math.round((300+d[1]*0.1)*CHM[CH]);
   const tsd={};TSETS.forEach(set=>{if(set.trait)tsd[set.trait]=traitTreasureProgress(set.trait);});
   S={t:0,money:Math.min(100,walletCapacity()),units:[],cool:MY.map(()=>0),over:null,boss:false,drop:'',drop2:'',fx:[],pop:[],cn:0,cnr:60,lid:0,pj:[],bm:[],dust:[],spk:[],ring:[],shake:0,bw:0,
-     walM:1,rateM:incomeMultiplier(),tsd,cm:CHC[CH],future:CH>=3,maxM:1000,rate:14,
+     walM:1,rateM:incomeMultiplier(),tsd,cm:CHC[CH],future:CH>=3&&CH<6,rule:curRule,maxM:1000,rate:14,
      my:{hp:1500*(1+basicProgress('baseHp'))*(1+0.3*futureTreasureProgress('f_base')),max:1500*(1+basicProgress('baseHp'))*(1+0.3*futureTreasureProgress('f_base'))},en:{hp:eh,max:eh},eSpawn:2,spawnN:0,mult:CHM[CH],wl:1,rng:stageRng(CH*100+i)};applyWk();
-  $('stageTitle').textContent=(CH>=3?'미래편 ':'세계편 ')+(CH%3+1)+'장 STAGE '+(i+1)+'  '+d[0]+(CH>=3&&d[4]?'  ['+FUTURE_PATTERN_NAMES[d[4]]+']':'');
+  if(curRule)toast('📋 출격 조건: '+MATH_RULES[curRule].name);
+  $('stageTitle').textContent=(isMathCH(CH)?'수학편 ':CH>=3?'미래편 ':'세계편 ')+(CH%3+1)+'장 STAGE '+(i+1)+'  '+d[0]+(curRule?'  📋'+MATH_RULES[curRule].name:'')+(CH>=3&&d[4]?'  ['+FUTURE_PATTERN_NAMES[d[4]]+']':'');
   show('battle');$('pmenu').classList.add('hide');last=performance.now();cancelAnimationFrame(raf);raf=requestAnimationFrame(loop);
 }
 function setPause(p){if(!S||S.over)return;S.paused=p;$('pmenu').classList.toggle('hide',!p);if(!p)last=performance.now();}
@@ -111,12 +114,19 @@ function spawnMy(k){const T=fm(MY[k]),m=lm(T.id),h=T.hp*m*tnm(T.id,'hp');
 const STAR_ALIENS={};
 // 같은 스테이지는 항상 같은 순서·타이밍·종류로 적이 나오도록 스테이지 번호로 고정된 난수를 씁니다.
 function stageRng(key){return seededRand(1000003+key*7919);}
-function spawnEn(code,boss){if(STAR_ALIENS[code]&&!S.space)return;if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),scale=CH>=3?(ENTY[code].includes('에일리언')?futureAlienMult()*(CH===3?1:CH===4?1.25:1.55):1.15):WORLD_ENEMY_SCALE,h=e[1]*S.mult*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
+function spawnEn(code,boss){if(STAR_ALIENS[code]&&!S.space)return;if(MATH_BOSSES[code]){spawnPilssam(code);return;}if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),scale=CH>=3?(ENTY[code].includes('에일리언')?futureAlienMult()*(CH===3?1:CH===4?1.25:1.55):1.15):WORLD_ENEMY_SCALE,h=e[1]*S.mult*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
   S.units.push({team:1,boss,code,T:{name:e[0],grid:enemyGrid(code),float:!!ENEMY_FLOAT[code],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:enemyScale(code,e[6]),col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
   if(boss){sfx('boss');S.shake=0.7;S.bw=1.4;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}} // 보스 등장: 아군 전체가 와르르 밀려나요
 }
+// 수학편 최종 보스 필쌤: 시안 수치를 그대로 쓰기 위해 장 배율을 곱하지 않습니다.
+function spawnPilssam(code){
+  const b=MATH_BOSSES[code],info=PILSSAM.info[b.n];if(!seenEnemies[code]){seenEnemies[code]=1;save();}
+  S.units.push({team:1,boss:true,code,T:{name:b.name,pilssam:b.n,hp:b.hp,atk:b.atk,speed:b.speed,range:b.range,cd:b.cd,s:1,ty:['무속성'],rw:b.rw,an:'pilssam',area:b.area,
+    adFix:info.ad,hitTimes:info.hits,redPen:b.redPen||0},x:80,hp:b.hp,max:b.hp,kbn:b.kb,nk:b.hp-b.hp/b.kb,t:1.5,kt:0,at:0,ph:0});
+  sfx('boss');S.shake=0.9;S.bw=1.6;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}
+}
 function deploy(k){
-  if(!S||S.over||S.paused||!MY[k]||!avail(MY[k]))return;const T=MY[k],c=Math.round(fm(T).cost*S.cm);
+  if(!S||S.over||S.paused||!MY[k]||!avail(MY[k]))return;if(S.rule&&!ruleAllows(S.rule,MY[k],SL.indexOf(k)))return;const T=MY[k],c=Math.round(fm(T).cost*S.cm);
   if(S.money>=c&&S.cool[k]<=0){S.money-=c;S.cool[k]=unitCooldown(T);spawnMy(k);if(T.t==='UR'){S.ring.push({x:W-80,t:0,ally:true});S.shake=Math.max(S.shake,.12);for(let q=0;q<16;q++)S.spk.push({x:W-80+(Math.random()-.5)*75,y:GY-30-Math.random()*100,t:0,col:['#fbec9a','#e989ff','#93ebff'][q%3]});}sfx('dep');}
 }
 addEventListener('keydown',e=>{if($('battle').classList.contains('hide'))return;
