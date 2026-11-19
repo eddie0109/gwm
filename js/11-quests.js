@@ -22,7 +22,7 @@ const sc=$('sc'),sg=sc.getContext('2d');let sT=0;
   const f=MY.filter(u=>u.t==='N'||u.t==='R');
   f.forEach((u,i)=>{const x=((sT*70+i*80)%900)-70,v=u.grid,h=v.length*Math.min(u.s,3);spr(v,x,104-h+Math.sin(sT*10+i)*2,Math.min(u.s,3),false,pl(u),sg);});}
   requestAnimationFrame(sa);})();
-$('goTr').onclick=()=>{treasureChapter=CH;buildTr();show('tre');};
+$('goTr').onclick=()=>{treasureChapter=CH>=6?0:CH;buildTr();show('tre');};
 $('backSel').onclick=()=>{buildGrid();show('select');};
 $('goUp').onclick=()=>{buildUp();show('up');};
 $('backSel2').onclick=()=>show('select');

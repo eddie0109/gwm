@@ -104,3 +104,8 @@
 #vtsStages{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch}
 #vtsStages h2{margin:2px 0 4px}#vtsStages h3{margin:10px 0 2px;font-size:1rem}
 #vtsStages .xp-icon{font-size:34px;width:75px;text-align:center;line-height:42px}
+/* 수학편: 출격 조건 */
+#grid .rule-badge{position:absolute;left:4px;top:3px;font-size:.8rem}
+#grid button{position:relative}
+#slots button.banned{opacity:.35;filter:grayscale(1)}
+#slots button.banned::after{content:"출격 불가";position:absolute;left:0;right:0;bottom:2px;font-size:.62rem;font-weight:900;color:#c0392b;text-shadow:0 0 2px #fff}

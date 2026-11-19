@@ -5,6 +5,7 @@ function castleHpText(en,my){g.font='bold 14px sans-serif';
   txt(en,Math.max(35,g.measureText(en).width/2+6),128,14);txt(my,Math.min(W-38,W-g.measureText(my).width/2-6),128,14);}
 function dsp(u,ft){
   if(u.T.train&&window.drawSteamTrainUnit){window.drawSteamTrainUnit(g,u,ft);return;}
+  if(u.T.pilssam&&window.PILSSAM){PILSSAM.draw(g,u,ft);return;}
   const T=u.T,grid=u.team===0?T.grid:u.code==='O'?CORN_EX:u.code==='C'||u.code==='0'?TOOTH_EX:u.code==='Ω'?CORN_EX:u.code==='A'?deco(FIGHT,['armor','wings']):(T.grid||TPL[T.tpl]),s=T.s,h=(T.spriteH||grid.length)*s,w=(T.spriteW||Math.max(...grid.map(r=>r.length)))*s,dir=u.team===0?-1:1,an=T.an;
   let ox=0,oy=-(T.float?8:0),rot=0,al=1,sx=1,sy=1;
   if(ft>0){const p=ft/0.6;ox=-dir*p*110;oy=-Math.sin(p*Math.PI)*50+p*40;rot=-dir*p*3;al=1-p;} // 데스 모션
@@ -127,7 +128,7 @@ function drawCan(x,y){
   g.strokeStyle=PAL.K;g.lineWidth=2;g.strokeRect(x-4,y-14+ly,52,8);
 }
 function drawEnemyBase(x,y){ // 적 성: 벽돌 + 포탑 + 뾰족 지붕 + 펄럭이는 깃발 + 빛나는 창 (장마다 색이 달라져요)
-  const c=[['#8b8f99','#6a6e78','#50545e'],['#8a6fb0','#6a5090','#4a3570'],['#6a4a4a','#4a2f2f','#2a1a1a'],['#4896bc','#276e89','#15425a'],['#4f70ba','#263985','#172053'],['#6849ad','#30237d','#171246']][CH],t=S?S.t:0;
+  const c=[['#8b8f99','#6a6e78','#50545e'],['#8a6fb0','#6a5090','#4a3570'],['#6a4a4a','#4a2f2f','#2a1a1a'],['#4896bc','#276e89','#15425a'],['#4f70ba','#263985','#172053'],['#6849ad','#30237d','#171246'],['#4a6a5a','#2f4a3d','#1e3328'],['#7a3b3b','#5a2626','#3a1414'],['#4a3c86','#2c2550','#1a1433']][CH],t=S?S.t:0;
   g.fillStyle=c[0];g.fillRect(x+6,y+14,42,86);
   g.fillStyle=c[1];for(let j=0;j<8;j++)for(let i=0;i<3;i++)g.fillRect(x+8+i*13+(j%2)*5,y+18+j*10,10,2);
   g.fillStyle=c[2];g.fillRect(x+6,y+14,4,86);g.fillRect(x+44,y+14,4,86);
@@ -148,7 +149,30 @@ const BGT=[
 ['#050918','#1a2a55','#18233f','#0d1630','#1e2b3b','#152131',2,2],
 ['#000006','#04051a','#15162b','#0b0c1e','#74747f','#5a5a64',3,3]];
 const theme=i=>i<10?0:i<22?1:i<34?2:i<47?3:4;
+// 수학편 배경: 필쌤 시안의 장별 하늘·땅 색 + 별 + 떠다니는 수식 + 칠판 그림자
+const MATH_BG=[{sky:['#0b0820','#140f35','#1d1647','#2a1d57'],ground:['#5b4f86','#7a6daa','#4a3f72'],planet:'saturn'},
+ {sky:['#14050c','#260a18','#3a1126','#4a1530'],ground:['#6b3a4f','#8c5068','#552c3e'],planet:'red'},
+ {sky:['#020208','#07051a','#0d0826','#120a2e'],ground:['#2c2550','#4b3f86','#221c40'],planet:'galaxy'}];
+const MATH_FLOAT=['π','∑','∫','√','∞','÷','×','=','x²','sin','dy/dx','a+b','%','!'];
+function mathBg(){
+  const M=MATH_BG[CH-MATH_CH0],t=S.t,bh=GY/M.sky.length;
+  M.sky.forEach((c,i)=>{g.fillStyle=c;g.fillRect(-20,i*bh-2,W+40,bh+4);});
+  g.fillStyle='#fff';for(let i=0;i<70;i++){if(Math.sin(t*2+i)>-0.3){const big=i%9===0;g.fillRect((i*137.5)%W,(i*71.3)%(GY-30),big?3:2,big?3:2);}}
+  if(M.planet==='saturn'){g.fillStyle='#e8b04a';g.beginPath();g.arc(660,62,22,0,7);g.fill();g.fillStyle='#c48a2c';g.fillRect(641,65,38,6);g.strokeStyle='#ffd34d';g.lineWidth=4;g.beginPath();g.ellipse(660,62,40,8,-0.3,0,7);g.stroke();}
+  else if(M.planet==='red'){g.fillStyle='#d9573f';g.beginPath();g.arc(660,68,30,0,7);g.fill();g.fillStyle='#a8402f';g.beginPath();g.arc(651,60,7,0,7);g.arc(672,78,5,0,7);g.fill();}
+  else{g.save();g.translate(650,76);g.rotate(t*0.2);for(let k=0;k<3;k++){g.strokeStyle=k%2?'#9a6bff':'#c9a6ff';g.lineWidth=4;g.beginPath();g.ellipse(0,0,52-k*13,19-k*4,0,k*2,k*2+3.6);g.stroke();}g.fillStyle='#e0d4ff';g.beginPath();g.arc(0,0,7,0,7);g.fill();g.restore();}
+  // 떠다니는 수식
+  g.save();g.font='bold 22px "Times New Roman",serif';g.textAlign='center';
+  for(let i=0;i<9;i++){const x=((i*113+t*(6+i%3*3))%(W+120))-60,y=40+(i*47)%150+Math.sin(t*0.8+i)*6;g.globalAlpha=0.16+0.08*Math.sin(t+i);g.fillStyle=i%2?'#ffe066':'#7fd4ff';g.fillText(MATH_FLOAT[(i+CH)%MATH_FLOAT.length],x,y);}g.restore();
+  // 멀리 보이는 칠판들
+  g.fillStyle='#0000002a';for(let i=0;i<5;i++){const x=i*170+30;g.fillRect(x,GY-70-(i%2)*14,110,56);}
+  g.fillStyle=M.ground[0];g.fillRect(-20,GY,W+40,60);g.fillStyle=M.ground[1];g.fillRect(-20,GY,W+40,4);
+  g.fillStyle=M.ground[2];[[90,GY+22,24],[310,GY+16,14],[470,GY+30,20],[690,GY+20,16]].forEach(([x,y,r])=>{g.beginPath();g.ellipse(x,y,r,r*0.3,0,0,7);g.fill();});
+  let rg=g.createRadialGradient(40,GY-40,10,40,GY-40,200);rg.addColorStop(0,'#ff3b3b44');rg.addColorStop(1,'#ff3b3b00');g.fillStyle=rg;g.fillRect(0,0,300,300);
+  rg=g.createRadialGradient(W-40,GY-40,10,W-40,GY-40,200);rg.addColorStop(0,'#3bb0ff44');rg.addColorStop(1,'#3bb0ff00');g.fillStyle=rg;g.fillRect(W-300,0,300,300);
+}
 function bg(){
+  if(isMathCH(CH)){mathBg();return;}
   const th=theme(stageIdx),B=BGT[th],t=S.t;
   const gr=g.createLinearGradient(0,0,0,GY);gr.addColorStop(0,B[0]);gr.addColorStop(1,B[1]);g.fillStyle=gr;g.fillRect(-20,-20,W+40,340);
   if(B[6]){const n=[0,26,64,120][B[6]];g.fillStyle='#fff';for(let i=0;i<n;i++){g.globalAlpha=0.3+0.7*Math.abs(Math.sin(t*1.4+i*1.7));const big=i%9===0;g.fillRect((i*97.3)%W,(i*53.7)%(GY-70),big?3:2,big?3:2);}g.globalAlpha=1;}

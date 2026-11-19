@@ -1,12 +1,12 @@
 // 건우 대전쟁 · 08-world-navigation.js
 // ════════ 월드 선택 (로그인 직후) ════════
-const WORLDS=[{n:'세계편',i:'🌏',s:'3장 · 각 48스테이지',ok:true},{n:'미래편',i:'🚀',s:'3장 · 각 48스테이지',ok:true},{n:'우주편',i:'🪐',s:'만드는 중',ok:false},{n:'건우 스토리',i:'📜',s:'VTS 시리즈 · 경험치 스테이지',ok:true},{n:'건우 도장',i:'🥋',s:'친구와 프라이빗 대전',ok:true}];
+const WORLDS=[{n:'세계편',i:'🌏',s:'3장 · 각 48스테이지',ok:true},{n:'미래편',i:'🚀',s:'3장 · 각 48스테이지',ok:true},{n:'수학편',i:'🧮',s:'3장 · 각 24스테이지 · 최종 보스 필쌤',ok:true},{n:'건우 스토리',i:'📜',s:'VTS 시리즈 · 경험치 스테이지',ok:true},{n:'건우 도장',i:'🥋',s:'친구와 프라이빗 대전',ok:true}];
 function buildWorld(){
   $('wdUser').textContent='👤'+(user?user.name:'게스트');
   const w=$('wgrid');w.innerHTML='';
   WORLDS.forEach(x=>{const b=document.createElement('button');b.className='wcard'+(x.ok?'':' wip');
     b.innerHTML='<span class="wi">'+x.i+'</span><b>'+x.n+'</b><small>'+(x.ok?x.s:'🚧 만드는 중이에요')+'</small>';
-    b.onclick=()=>{if(!x.ok){toast('🚧 '+x.n+'은(는) 아직 만드는 중이에요!');return;}if(x.n==='건우 도장'){show('dojo');return;}if(x.n==='건우 스토리'){buildVTSStages();show('vtsSelect');return;}if(x.n==='미래편'&&!cleared[47]){toast('세계편 1장 달을 클리어하면 미래편이 열립니다!');return;}CH=x.n==='미래편'?3:0;buildGrid();show('select');};w.appendChild(b);});
+    b.onclick=()=>{if(!x.ok){toast('🚧 '+x.n+'은(는) 아직 만드는 중이에요!');return;}if(x.n==='건우 도장'){show('dojo');return;}if(x.n==='건우 스토리'){buildVTSStages();show('vtsSelect');return;}if((x.n==='미래편'||x.n==='수학편')&&!cleared[47]){toast('세계편 1장 달을 클리어하면 '+x.n+'이 열립니다!');return;}CH=x.n==='미래편'?3:x.n==='수학편'?MATH_CH0:0;buildGrid();show('select');};w.appendChild(b);});
 }
 // ── 적도감: 종류별 첫 조우를 계정에 저장
 function buildDex(){
@@ -15,10 +15,11 @@ function buildDex(){
   const box=$('dexList');box.innerHTML='';
   codes.forEach(code=>{
     const e=EN[code],known=!!seenEnemies[code],bt=document.createElement('button');bt.className='dex-item';
-    const cv=document.createElement('canvas'),scale=code==='O'||code==='C'?2:3,grid=code==='O'?CORN_EX:code==='C'?TOOTH_EX:enemyGrid(code);
+    const cv=document.createElement('canvas'),scale=code==='O'||code==='C'?2:3,grid=code==='O'?CORN_EX:code==='C'?TOOTH_EX:enemyGrid(code),pil=MATH_BOSSES[code];
     cv.width=Math.max(...grid.map(row=>row.length))*scale;cv.height=grid.length*scale;
-    if(known){spr(grid,0,0,scale,false,code==='O'?pl(MY.find(u=>u.id==='cornbar')):code==='C'?pl(MY.find(u=>u.id==='healthytooth')):cp(e[5],e[8]),cv.getContext('2d'));}else{const ctx=cv.getContext('2d');ctx.font='bold 26px sans-serif';ctx.fillStyle='#99a6ba';ctx.fillText('?',cv.width/2-7,cv.height/2+9);}
-    const span=document.createElement('span');span.innerHTML='<b>'+(known?e[0]:'???')+'</b><small>'+(known?(ENTY[code].join(' / ')+' · '+(code==='F'?'세계편 1장 보스':code==='O'?'세계편 2장 보스':code==='C'?'세계편 3장 보스':'적 캐릭터')):'아직 발견하지 못한 적')+'</small>';
+    if(known&&pil){cv.width=96;cv.height=96;cv.getContext('2d').drawImage(PILSSAM.icon(pil.n),0,0);}
+    else if(known){spr(grid,0,0,scale,false,code==='O'?pl(MY.find(u=>u.id==='cornbar')):code==='C'?pl(MY.find(u=>u.id==='healthytooth')):cp(e[5],e[8]),cv.getContext('2d'));}else{const ctx=cv.getContext('2d');ctx.font='bold 26px sans-serif';ctx.fillStyle='#99a6ba';ctx.fillText('?',cv.width/2-7,cv.height/2+9);}
+    const span=document.createElement('span');span.innerHTML='<b>'+(known?e[0]:'???')+'</b><small>'+(known?(ENTY[code].join(' / ')+' · '+(code==='F'?'세계편 1장 보스':code==='O'?'세계편 2장 보스':code==='C'?'세계편 3장 보스':pil?'수학편 '+pil.n+'장 최종 보스':'적 캐릭터')):'아직 발견하지 못한 적')+'</small>';
     bt.append(cv,span);box.appendChild(bt);
     if(known){bt.onclick=()=>{const old=box.querySelector('.dex-detail');if(old)old.remove();if(bt.dataset.open==='1'){bt.dataset.open='';return;}box.querySelectorAll('.dex-item').forEach(x=>x.dataset.open='');bt.dataset.open='1';const d=document.createElement('div');d.className='dex-detail';const sp=EN_SPECIAL[code];d.innerHTML='<b>'+e[0]+'</b><p>속성: '+ENTY[code].join(' / ')+'<br>기본 체력: '+e[1].toLocaleString()+' · 기본 공격력: '+Math.round(e[2]).toLocaleString()+'<br>이동속도: '+e[3]+' · 기본 사거리: '+e[4]+'<br>공격 범위: '+(ENAR.includes(code)?'범위 공격':'단일 공격')+'<br>처치 시 기본 보상: '+ENR[code]+'원'+(sp?'<br>특수 효과: '+sp.description:'')+'</p><small>실제 전투 능력치는 장·스테이지 배율과 보스 보정에 따라 달라집니다.</small>';bt.after(d);};}
   });

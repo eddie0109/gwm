@@ -5,13 +5,14 @@ const STAGE_FLAGS=['🇰🇷','🇲🇳','🇨🇳','🇹🇭','🇰🇭','🇵�
 function stageFlag(i){return STAGE_FLAGS[i]||'🌍';}
 
 function buildGrid(){
-  $('cur').textContent='👤'+(user?user.name:'게스트')+'  🎫'+tk+' 🌟'+rt+' 💎'+em+(CH>=3?' ⚡'+currentEnergy()+'/'+maxEnergy():'');
+  $('cur').textContent='👤'+(user?user.name:'게스트')+'  🎫'+tk+' 🌟'+rt+' 💎'+em+(CH>=3&&CH<6?' ⚡'+currentEnergy()+'/'+maxEnergy():'');
   const tb=$('chtab');tb.innerHTML='';
-  (CH>=3?[3,4,5]:[0,1,2]).forEach(c=>{const b=document.createElement('button'),lk=c>=(CH>=3?4:1)&&!cleared[(c-1)*100+47];
+  const chs=isMathCH(CH)?[6,7,8]:CH>=3?[3,4,5]:[0,1,2];
+  chs.forEach(c=>{const b=document.createElement('button'),lk=c>chs[0]&&!cleared[(c-1)*100+STS[c-1].length-1];
     b.textContent=(lk?'🔒 ':'')+(c%3+1)+'장 (적 ×'+CHM[c]+')';b.disabled=lk;if(c===CH)b.className='on';b.onclick=()=>{CH=c;buildGrid();};tb.appendChild(b);});
   const gr=$('grid');gr.innerHTML='';
   STS[CH].forEach((s,i)=>{const b=document.createElement('button'),lock=i>0&&!cleared[ck(i-1)];if(cleared[ck(i)])b.className='cl';
-    b.title=s[0];b.innerHTML='<b>'+(i+1)+'</b><span class="stage-flag">'+stageFlag(i)+'</span><span class="stage-name">'+s[0]+'</span>'+(lock?'<span class="stage-ok">🔒</span>':(cleared[ck(i)]?'<span class="stage-ok">✓</span>':''))+(stageTreasure(CH,i).some(t=>hasTreasure(CH,t))?'<span class="tre-badge" title="보물 획득">★</span>':'');b.disabled=lock;b.onclick=()=>startStage(i);gr.appendChild(b);});
+    b.title=s[0];b.innerHTML='<b>'+(i+1)+'</b><span class="stage-flag">'+(isMathCH(CH)?(i===23?'👓':MATH_ICONS[i%12]):stageFlag(i))+'</span><span class="stage-name">'+s[0]+'</span>'+(lock?'<span class="stage-ok">🔒</span>':(cleared[ck(i)]?'<span class="stage-ok">✓</span>':''))+(stageTreasure(CH,i).some(t=>hasTreasure(CH,t))?'<span class="tre-badge" title="보물 획득">★</span>':'')+(s[5]?'<span class="rule-badge" title="출격 조건: '+MATH_RULES[s[5]].name+'">📋</span>':'');b.disabled=lock;b.onclick=()=>startStage(i);gr.appendChild(b);});
 }
 const tdone=s=>setDone(CH,s);
 function buildTr(){
