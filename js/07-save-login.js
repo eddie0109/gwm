@@ -50,6 +50,16 @@ function enter(u){setUser(u);loadAll();save();buildWorld();show('world');}
 // 2) 팝업이 막히는 환경이면 페이지 이동 방식(redirect)으로 다시 시도합니다.
 // 3) 카카오톡·인스타그램 등 앱 안 브라우저는 구글이 로그인을 막으므로 외부 브라우저로 열도록 안내합니다.
 const IN_APP=/KAKAOTALK|Instagram|NAVER\(|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\//i.test(navigator.userAgent);
+// 앱 안 브라우저 → 외부 브라우저로 같은 주소 열기
+// 카카오톡: kakaotalk://web/openExternal (아이폰·안드로이드 모두) / 안드로이드의 다른 앱: 크롬 intent / 그 외: 안내
+const IS_KAKAO=/KAKAOTALK/i.test(navigator.userAgent),IS_ANDROID=/Android/i.test(navigator.userAgent);
+function openExternalBrowser(){
+  const m=$('cloudMsg'),url=location.href;
+  if(IS_KAKAO){m.textContent='카카오톡에서는 구글 로그인이 막혀 있어서 외부 브라우저로 열어요…';location.href='kakaotalk://web/openExternal?url='+encodeURIComponent(url);}
+  else if(IS_ANDROID){m.textContent='앱 안 브라우저에서는 구글 로그인이 막혀 있어서 크롬으로 열어요…';location.href='intent://'+url.replace(/^https?:\/\//,'')+'#Intent;scheme=https;package=com.android.chrome;end';}
+  else{m.textContent='⚠ 앱 안 브라우저에서는 구글 로그인이 막혀 있어요. 화면의 공유(⋯) 버튼 → "Safari로 열기"를 눌러 주세요.';return;}
+  setTimeout(()=>{if(document.visibilityState==='visible')m.textContent='⚠ 외부 브라우저가 열리지 않았다면, 화면 메뉴(⋮ 또는 공유)에서 "다른 브라우저로 열기"를 눌러 주세요.';},2500);
+}
 const AUTH_MSG={
  'auth/popup-closed-by-user':'로그인 창이 완료 전에 닫혔어요. 다시 눌러 주세요. 창이 저절로 바로 닫힌다면 팝업 차단을 풀거나 크롬·사파리에서 열어 주세요.',
  'auth/cancelled-popup-request':'로그인 창이 이미 열려 있어요. 열린 창에서 계속해 주세요.',
@@ -92,7 +102,7 @@ function setupGsi(){
 }
 let loginBusy=false;
 async function cloudLogin(k){const m=$('cloudMsg');
-  if(IN_APP){m.textContent='⚠ 카카오톡·인스타그램 같은 앱 안 브라우저에서는 구글이 로그인을 막아요. 화면 메뉴(⋮ 또는 공유)에서 "다른 브라우저로 열기"를 눌러 크롬·사파리에서 열어 주세요.';return;}
+  if(IN_APP){openExternalBrowser();return;}
   if(loginBusy)return;loginBusy=true;
   try{
     if(!fbA){m.textContent='로그인 준비 중…';await fbInit();m.textContent='준비됐어요! 로그인 버튼을 한 번 더 눌러 주세요.';return;} // 준비 후 첫 클릭은 창이 막힐 수 있어 다시 누르게 함
