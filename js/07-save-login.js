@@ -130,6 +130,25 @@ $('lgG').disabled=$('lgGH').disabled=!FB;
 $('cloudMsg').textContent=FB?'':'(클라우드 로그인은 Firebase 설정 후 사용할 수 있어요)';
 $('lgG').onclick=()=>cloudLogin('g');setupGsi();$('lgGH').onclick=()=>cloudLogin('gh');
 $('lgLocal').onclick=()=>{const n=$('nick').value.trim().slice(0,12);if(!n){toast('닉네임을 입력하세요');return;}enter({id:'n_'+n.toLowerCase(),name:n,type:'local'});};
+// ── 로그인 진단: 로그인에 필요한 서버마다 실제 요청을 보내 어디서 막히는지 표시 (아무 계정 정보도 보내지 않음)
+async function runLoginDiag(){
+  const out=$('diagOut');out.classList.remove('hide');const lines=['기기: '+navigator.userAgent,'온라인: '+navigator.onLine,'쿠키 사용: '+navigator.cookieEnabled,''];
+  const show2=()=>{out.textContent=lines.join('\n');};show2();
+  const timed=(pr,ms)=>Promise.race([pr,new Promise((_,no)=>setTimeout(()=>no(new Error('시간 초과')),ms))]);
+  const check=async(name,fn)=>{lines.push('… '+name);show2();const i=lines.length-1;
+    try{const r=await timed(fn(),8000);lines[i]='✅ '+name+(r?' ('+r+')':'');}catch(e){lines[i]='❌ '+name+' — '+(e&&e.message||e);}show2();};
+  const K=FB.apiKey,IT='https://identitytoolkit.googleapis.com';
+  await check('Firebase 프로그램 받기 (gstatic)',async()=>{await fbInit();return '준비됨';});
+  await check('로그인 서버 설정 읽기 (identitytoolkit GET)',async()=>{const r=await fetch(IT+'/v1/projects?key='+K);const j=await r.json();return 'HTTP '+r.status+(j.authorizedDomains?' · 승인 도메인에 이 사이트 '+(j.authorizedDomains.includes(location.hostname)?'있음':'없음!'):'');});
+  await check('로그인 요청 보내기 (identitytoolkit POST)',async()=>{const r=await fetch(IT+'/v1/accounts:signInWithIdp?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});return 'HTTP '+r.status+' (400이면 정상: 서버까지 도착)';});
+  await check('로그인 유지 서버 (securetoken POST)',async()=>{const r=await fetch('https://securetoken.googleapis.com/v1/token?key='+K,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token=x'});return 'HTTP '+r.status+' (400이면 정상)';});
+  await check('저장 서버 (firestore)',async()=>{const r=await fetch('https://firestore.googleapis.com/v1/projects/'+FB.projectId+'/databases/(default)/documents/diag/none?key='+K);return 'HTTP '+r.status+' (403/404면 정상: 서버까지 도착)';});
+  await check('로그인 중계 페이지 ('+FB.authDomain+')',async()=>{await fetch('https://'+FB.authDomain+'/__/auth/iframe.js',{mode:'no-cors',cache:'no-store'});return '연결됨';});
+  await check('Google 계정 서버 (accounts.google.com)',async()=>{await fetch('https://accounts.google.com/gsi/client',{mode:'no-cors',cache:'no-store'});return '연결됨';});
+  let st='알 수 없음';try{if(navigator.storage&&navigator.storage.persisted)st=(await navigator.storage.estimate()).quota>0?'사용 가능':'제한됨';}catch(e){st='오류: '+e.message;}
+  lines.push('저장소(IndexedDB 등): '+st,'','❌ 표시가 있는 줄을 캡처해서 보내 주세요.');show2();
+}
+$('lgDiag').onclick=()=>{void runLoginDiag();};
 $('lgGuest').onclick=()=>enter({id:'guest',name:'게스트',type:'guest'});
 $('lgBack').onclick=()=>show('start');
 $('goOut').onclick=logout;

@@ -10,8 +10,8 @@
 <link rel="stylesheet" href="css/01-base.css">
 <link rel="stylesheet" href="css/02-ui.css">
 <link rel="stylesheet" href="css/03-battlecats-theme.css">
-<link rel="stylesheet" href="css/04-features.css?v=20261120-kakao">
-<link rel="stylesheet" href="css/05-private-battle.css?v=20261120-kakao">
+<link rel="stylesheet" href="css/04-features.css?v=20261120-diag">
+<link rel="stylesheet" href="css/05-private-battle.css?v=20261120-diag">
 </head>
 <body>
 <div id="game">
@@ -28,6 +28,8 @@
     <div class="tr"><b>닉네임으로 시작</b> <small>(이 기기에만 저장돼요)</small><div style="display:flex;gap:8px;margin-top:8px"><input id="nick" maxlength="12" placeholder="닉네임 (최대 12자)"><button id="lgLocal" style="white-space:nowrap">시작</button></div></div>
     <div class="tr"><b>클라우드 로그인</b> <small>(어느 기기에서든 이어하기)</small><div class="nav" style="margin-top:8px"><button id="lgG">Google 로그인</button><div id="gsiBtn" class="hide"></div><button id="lgGH">GitHub 로그인</button></div><small id="cloudMsg"></small></div>
     <button id="lgGuest">게스트로 시작</button>
+    <button id="lgDiag" type="button" class="diag-btn">🔍 로그인 진단 (로그인이 안 될 때 눌러 주세요)</button>
+    <pre id="diagOut" class="hide"></pre>
   </div>
 </section>
 
@@ -104,26 +106,26 @@
 <div id="toast" class="hide"></div>
 </div>
 <div id="rot">📱 기기를 가로로 돌려주세요 (가로 화면 전용 게임이에요)</div>
-<script src="js/01-core.js?v=20261120-kakao"></script>
-<script src="js/02-sprites.js?v=20261120-kakao"></script>
-<script src="js/02b-steam-train.js?v=20261120-kakao"></script>
-<script src="js/03-traits.js?v=20261120-kakao"></script>
-<script src="js/04-units.js?v=20261120-kakao"></script>
-<script src="js/05-treasures.js?v=20261120-kakao"></script>
-<script src="js/06-enemies-stages.js?v=20261120-kakao"></script>
-<script src="js/06b-enemy-art.js?v=20261120-kakao"></script>
-<script src="js/06c-math-chapter.js?v=20261120-kakao"></script>
-<script src="js/07-save-login.js?v=20261120-kakao"></script>
-<script src="js/08-world-navigation.js?v=20261120-kakao"></script>
-<script src="js/09-stage-selection-formation.js?v=20261120-kakao"></script>
-<script src="js/10-gacha.js?v=20261120-kakao"></script>
-<script src="js/11-quests.js?v=20261120-kakao"></script>
-<script src="js/12-upgrades.js?v=20261120-kakao"></script>
-<script src="js/13-battle-controls.js?v=20261120-kakao"></script>
-<script src="js/14-battle-logic.js?v=20261120-kakao"></script>
-<script src="js/15-battle-graphics.js?v=20261120-kakao"></script>
-<script src="js/16-private-battle.js?v=20261120-kakao"></script>
-<script src="js/17-vts-series.js?v=20261120-kakao"></script>
-<script src="js/18-math-boss.js?v=20261120-kakao"></script>
+<script src="js/01-core.js?v=20261120-diag"></script>
+<script src="js/02-sprites.js?v=20261120-diag"></script>
+<script src="js/02b-steam-train.js?v=20261120-diag"></script>
+<script src="js/03-traits.js?v=20261120-diag"></script>
+<script src="js/04-units.js?v=20261120-diag"></script>
+<script src="js/05-treasures.js?v=20261120-diag"></script>
+<script src="js/06-enemies-stages.js?v=20261120-diag"></script>
+<script src="js/06b-enemy-art.js?v=20261120-diag"></script>
+<script src="js/06c-math-chapter.js?v=20261120-diag"></script>
+<script src="js/07-save-login.js?v=20261120-diag"></script>
+<script src="js/08-world-navigation.js?v=20261120-diag"></script>
+<script src="js/09-stage-selection-formation.js?v=20261120-diag"></script>
+<script src="js/10-gacha.js?v=20261120-diag"></script>
+<script src="js/11-quests.js?v=20261120-diag"></script>
+<script src="js/12-upgrades.js?v=20261120-diag"></script>
+<script src="js/13-battle-controls.js?v=20261120-diag"></script>
+<script src="js/14-battle-logic.js?v=20261120-diag"></script>
+<script src="js/15-battle-graphics.js?v=20261120-diag"></script>
+<script src="js/16-private-battle.js?v=20261120-diag"></script>
+<script src="js/17-vts-series.js?v=20261120-diag"></script>
+<script src="js/18-math-boss.js?v=20261120-diag"></script>
 </body>
 </html>
