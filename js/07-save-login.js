@@ -38,7 +38,19 @@ let fbReady=null; // 여러 곳에서 동시에 불러도 Firebase는 한 번만
 function fbInit(){return fbReady||(fbReady=fbLoad().catch(e=>{fbReady=null;throw e;}));}
 async function fbLoad(){if(!FB)throw new Error('Firebase 설정이 아직 없어요 (코드의 FB 변수)');if(fbA)return;const B='https://www.gstatic.com/firebasejs/10.12.2/';
   await ldScript(B+'firebase-app-compat.js');await ldScript(B+'firebase-auth-compat.js');await ldScript(B+'firebase-firestore-compat.js');
-  firebase.initializeApp(FB);fbA=firebase.auth();fbDb=firebase.firestore();}
+  // 메인 앱은 authDomain 없이 시작: 시작할 때 firebaseapp.com 중계 페이지(숨은 iframe)를 불러오지 않아
+  // 학교 기기처럼 그 페이지가 막힌 환경에서도 로그인 프로그램이 멈추지 않습니다. (Google 공식 버튼 로그인·저장에는 필요 없음)
+  const main=Object.assign({},FB);delete main.authDomain;
+  firebase.initializeApp(main);fbA=firebase.auth();fbDb=firebase.firestore();}
+// 팝업/페이지 이동 로그인(GitHub, 또는 Google 버튼을 못 쓸 때)은 중계 페이지가 필요해서 별도 앱에서 하고,
+// 받은 자격 증명으로 메인 앱에 로그인합니다.
+let popA=null;
+function popupAuth(){if(!popA)popA=firebase.initializeApp(FB,'popup').auth();return popA;}
+async function signInFromPopupResult(r){
+  if(!r||!r.user)return null;
+  if(r.credential){const m=await fbA.signInWithCredential(r.credential);return m.user;}
+  throw Object.assign(new Error('로그인 정보를 넘겨받지 못했어요'),{code:'auth/missing-credential'});
+}
 function cloudPush(){if(!user||user.type!=='cloud'||!fbDb)return;clearTimeout(pushT);
   pushT=setTimeout(()=>{fbDb.collection('users').doc(user.uid).set({d:JSON.stringify(snap()),t:Date.now()}).catch(()=>{});},1500);}
 async function cloudPull(){const r=await fbDb.collection('users').doc(user.uid).get();
@@ -112,22 +124,22 @@ async function cloudLogin(k){const m=$('cloudMsg');
     const p=k==='g'?new firebase.auth.GoogleAuthProvider():new firebase.auth.GithubAuthProvider();
     if(k==='g')p.setCustomParameters({prompt:'select_account'});
     let r;
-    try{r=await fbA.signInWithPopup(p);}
+    try{r=await popupAuth().signInWithPopup(p);}
     catch(e){
       if(e&&e.code==='auth/network-request-failed'){ // 대부분 브라우저·확장 프로그램이 Google 로그인 서버를 막은 경우
         m.textContent='연결 상태를 확인하는 중…';const why=await probeAuthNet();
         if(why){m.textContent=why;return;}
         m.textContent='팝업 방식이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
-        redirectWatch();await fbA.signInWithRedirect(p);return;}
+        redirectWatch();await popupAuth().signInWithRedirect(p);return;}
       if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){
         m.textContent='팝업이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
-        redirectWatch();await fbA.signInWithRedirect(p);return;}
+        redirectWatch();await popupAuth().signInWithRedirect(p);return;}
       throw e;}
-    await finishCloudLogin(r.user);
-  }catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e);}
+    await finishCloudLogin(await signInFromPopupResult(r));
+  }catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e)+' ['+((e&&e.code)||'오류')+']';}
   finally{loginBusy=false;}
 }
-function logout(){try{fbA&&fbA.signOut();}catch(e){}user=null;UID='guest';try{localStorage.removeItem('gw_session');}catch(e){}loadAll();show('login');}
+function logout(){try{fbA&&fbA.signOut();popA&&popA.signOut();}catch(e){}user=null;UID='guest';try{localStorage.removeItem('gw_session');}catch(e){}loadAll();show('login');}
 $('lgG').disabled=$('lgGH').disabled=!FB;
 $('cloudMsg').textContent=FB?'':'(클라우드 로그인은 Firebase 설정 후 사용할 수 있어요)';
 $('lgG').onclick=()=>cloudLogin('g');setupGsi();$('lgGH').onclick=()=>cloudLogin('gh');
@@ -141,6 +153,8 @@ async function runLoginDiag(){
     try{const r=await timed(fn(),8000);lines[i]='✅ '+name+(r?' ('+r+')':'');}catch(e){lines[i]='❌ '+name+' — '+(e&&e.message||e);}show2();};
   const K=FB.apiKey,IT='https://identitytoolkit.googleapis.com';
   await check('Firebase 프로그램 받기 (gstatic)',async()=>{await fbInit();return '준비됨';});
+  await check('브라우저 저장소 (IndexedDB)',()=>new Promise((ok,no)=>{try{const q=indexedDB.open('gw_diag');q.onsuccess=()=>{q.result.close();ok('열림');};q.onerror=()=>no(new Error(q.error&&q.error.name||'열기 실패'));q.onblocked=()=>no(new Error('막힘'));}catch(e){no(e);}}));
+  await check('중계 페이지 창 열기 (iframe '+FB.authDomain+')',()=>new Promise((ok,no)=>{const f=document.createElement('iframe');f.style.display='none';f.src='https://'+FB.authDomain+'/__/auth/iframe?apiKey='+FB.apiKey+'&appName=diag&v=10.12.2';f.onload=()=>{f.remove();ok('불러옴 (참고: 이 줄이 실패해도 Google 버튼 로그인은 이제 영향 없음)');};f.onerror=()=>{f.remove();no(new Error('불러오기 실패'));};document.body.appendChild(f);}));
   await check('Firebase 로그인 초기화 (SDK)',async()=>{const t0=performance.now();await new Promise(res=>{const un=fbA.onAuthStateChanged(()=>{un();res();});});return Math.round(performance.now()-t0)+'ms';});
   await check('SDK 방식 서버 요청 (createAuthUri)',async()=>{try{await fbA.fetchSignInMethodsForEmail('diag-test@example.com');return '정상';}catch(e){if(e&&e.code&&e.code!=='auth/network-request-failed')return '서버 응답: '+e.code;throw new Error(e&&e.code||e);}});
   await check('로그인 서버 설정 읽기 (identitytoolkit GET)',async()=>{const r=await fetch(IT+'/v1/projects?key='+K);const j=await r.json();return 'HTTP '+r.status+(j.authorizedDomains?' · 승인 도메인에 이 사이트 '+(j.authorizedDomains.includes(location.hostname)?'있음':'없음!'):'');});
@@ -162,7 +176,7 @@ loadAll();
 if(FB)fbInit().then(async()=>{
   let pending=false;try{pending=!!sessionStorage.getItem('gw_login_redirect');sessionStorage.removeItem('gw_login_redirect');}catch(_){}
   if(!pending)return;
-  try{const r=await fbA.getRedirectResult();if(r&&r.user)await finishCloudLogin(r.user);else{show('login');$('cloudMsg').textContent='⚠ 로그인이 완료되지 않았어요. 다시 시도하거나 크롬·사파리에서 열어 주세요.';}}
+  try{const r=await popupAuth().getRedirectResult();const u=await signInFromPopupResult(r);if(u)await finishCloudLogin(u);else{show('login');$('cloudMsg').textContent='⚠ 로그인이 완료되지 않았어요. 다시 시도하거나 크롬·사파리에서 열어 주세요.';}}
   catch(e){show('login');$('cloudMsg').textContent=authMsg(e);}
 }).catch(e=>console.warn('Firebase 준비 실패',e));
 (async function restore(){try{const s=JSON.parse(localStorage.getItem('gw_session')||'null');if(!s)return;
