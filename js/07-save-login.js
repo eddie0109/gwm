@@ -50,11 +50,20 @@ const AUTH_MSG={
  'auth/cancelled-popup-request':'로그인 창이 이미 열려 있어요. 열린 창에서 계속해 주세요.',
  'auth/popup-blocked':'브라우저가 로그인 창을 막았어요. 주소창의 팝업 차단을 허용한 뒤 다시 눌러 주세요.',
  'auth/unauthorized-domain':'이 주소는 Firebase 승인 도메인에 없어요. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 지금 사이트 주소를 추가해 주세요.',
- 'auth/network-request-failed':'인터넷 연결이 불안정해요. 잠시 후 다시 시도해 주세요.',
+ 'auth/network-request-failed':'로그인 서버와 연결하지 못했어요. 광고 차단 확장 프로그램·Brave 쉴드·사파리 "크로스 사이트 추적 방지"를 끄거나 크롬에서 다시 시도해 주세요.',
  'auth/account-exists-with-different-credential':'같은 이메일로 다른 방식(구글/깃허브) 로그인이 이미 있어요. 처음 쓰던 방식으로 로그인해 주세요.',
  'auth/web-storage-unsupported':'이 브라우저는 로그인 정보를 저장할 수 없어요(사생활 보호 모드 등). 일반 창에서 열어 주세요.',
  'auth/operation-not-allowed':'Firebase 콘솔에서 이 로그인 방식이 꺼져 있어요. Authentication → 로그인 방법에서 켜 주세요.'
 };
+// 로그인에 필요한 서버에 실제로 닿는지 확인 → 막힌 곳이 있으면 원인 안내 문구, 모두 닿으면 null
+async function probeAuthNet(){
+  if(navigator.onLine===false)return '⚠ 인터넷에 연결되어 있지 않아요. 와이파이·데이터를 확인해 주세요.';
+  const reach=async u=>{try{await Promise.race([fetch(u,{mode:'no-cors',cache:'no-store'}),new Promise((_,no)=>setTimeout(()=>no(new Error('timeout')),6000))]);return true;}catch(_){return false;}};
+  const [auth,api,google]=await Promise.all([reach('https://'+FB.authDomain+'/__/auth/iframe.js'),reach('https://identitytoolkit.googleapis.com/v1/projects?key='+FB.apiKey),reach('https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js')]);
+  const blocked=[!auth&&FB.authDomain,!api&&'identitytoolkit.googleapis.com',!google&&'www.gstatic.com'].filter(Boolean);
+  if(!blocked.length)return null;
+  return '⚠ 이 브라우저에서 로그인 서버('+blocked.join(', ')+') 연결이 막혀 있어요. 광고 차단 확장 프로그램·Brave 쉴드·보안 앱·학교/회사 와이파이 차단을 끄거나, 다른 브라우저(크롬·사파리)나 모바일 데이터로 다시 시도해 주세요.';
+}
 const authMsg=e=>'⚠ '+(AUTH_MSG[e&&e.code]||('로그인 실패: '+((e&&e.message)||e)));
 async function finishCloudLogin(u){
   setUser({id:'c_'+u.uid,uid:u.uid,name:u.displayName||u.email||'건우',type:'cloud'});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
@@ -71,6 +80,11 @@ async function cloudLogin(k){const m=$('cloudMsg');
     let r;
     try{r=await fbA.signInWithPopup(p);}
     catch(e){
+      if(e&&e.code==='auth/network-request-failed'){ // 대부분 브라우저·확장 프로그램이 Google 로그인 서버를 막은 경우
+        m.textContent='연결 상태를 확인하는 중…';const why=await probeAuthNet();
+        if(why){m.textContent=why;return;}
+        m.textContent='팝업 방식이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
+        await fbA.signInWithRedirect(p);return;}
       if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){
         m.textContent='팝업이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
         await fbA.signInWithRedirect(p);return;}
