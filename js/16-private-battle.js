@@ -29,11 +29,21 @@ const pvpStats=()=>({
 });
 function status(t){$p('pvpStatus').textContent=t;}
 function error(e){console.error('[건우도장]',e);toast('프라이빗 배틀: '+(e&&e.message?e.message:String(e)));}
+// 대전은 실시간 동기화(Firestore SDK)가 필요해요. 아이디 계정이면 대전 서버에도 같은 아이디로 연결합니다.
 async function needCloud(){
- if(!user||user.type!=='cloud'){toast('대전은 건우 계정(아이디)으로 로그인해서 이용해 주세요.');return false;}
- await fbInit();
- if(!fbA.currentUser||fbA.currentUser.uid!==user.uid){toast(user.rest?'이 기기에서는 실시간 대전 서버에 연결하지 못했어요. 로그아웃 후 다시 로그인하거나 다른 기기에서 해 주세요.':'계정 로그인을 다시 진행해 주세요.');return false;}
- return true;
+ if(!user||user.type!=='cloud'){toast('대전은 건우 계정(아이디)으로 로그인해서 이용해 주세요. (닉네임·게스트는 불가)');return false;}
+ try{await fbInit();}catch(e){toast('대전 서버 프로그램을 불러오지 못했어요. 인터넷 연결을 확인해 주세요.');return false;}
+ if(fbA.currentUser&&fbA.currentUser.uid===user.uid)return true;
+ if(user.rest){
+  const id=user.login||prompt('대전 서버 연결: 아이디를 입력해 주세요');if(!id)return false;
+  const pw=prompt('대전 서버에 연결하려면 비밀번호를 한 번 더 입력해 주세요 ('+id+')');if(!pw)return false;
+  try{const r=await fbA.signInWithEmailAndPassword(idEmail(String(id).trim().toLowerCase()),pw);
+    if(r.user.uid!==user.uid){await fbA.signOut();toast('지금 로그인한 계정과 다른 아이디예요.');return false;}
+    if(!user.login){user.login=String(id).trim().toLowerCase();setUser(user);}
+    return true;}
+  catch(e){toast(e&&e.code==='auth/network-request-failed'?'이 기기(네트워크)에서는 실시간 대전 서버 연결이 막혀 있어요. 다른 기기나 네트워크에서 해 주세요.':authMsg(e));return false;}
+ }
+ toast('계정 로그인을 다시 진행해 주세요.');return false;
 }
 function code8(){const arr=new Uint8Array(8);crypto.getRandomValues(arr);const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from(arr,v=>chars[v%chars.length]).join('');}
 function showRoom(code){$p('pvpCode').textContent='방 '+code;$p('pvpRoomCode').textContent=code;$p('pvpLobby').classList.remove('hide');$p('pvpPlay').classList.add('hide');$p('privateBattle').classList.remove('playing');show('privateBattle');}

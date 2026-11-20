@@ -142,8 +142,8 @@ async function finishCloudLogin(u,name){
   const em=u.email||'',nm=name||u.displayName||(em.endsWith('@'+ID_DOMAIN)?em.split('@')[0]:em)||'건우';
   setUser({id:'c_'+u.uid,uid:u.uid,name:nm,type:'cloud'});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
 }
-async function finishRestLogin(name){
-  setUser({id:'c_'+restAuth.uid,uid:restAuth.uid,name:name||'건우',type:'cloud',rest:true});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
+async function finishRestLogin(name,loginId){
+  setUser({id:'c_'+restAuth.uid,uid:restAuth.uid,name:name||'건우',type:'cloud',rest:true,login:loginId||''});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
 }
 // 페이지 이동 방식이 브라우저에 막혀 아무 일도 안 일어나면 10초 뒤 안내
 function redirectWatch(){setTimeout(()=>{if(document.visibilityState==='visible'&&!$('login').classList.contains('hide')&&/이동해요/.test($('cloudMsg').textContent)){
@@ -192,10 +192,10 @@ async function accountSubmit(){
   try{
     m.textContent=join?'가입하는 중…':'로그인 중…';
     if(join){step='가입';await restSignUp(email,f.pw);step='닉네임 저장';const j=await restUpdate({displayName:f.nick||f.id}).catch(()=>null);
-      step='저장 데이터';await finishRestLogin(f.nick||f.id);toast('🎉 회원가입 완료! 이제 어느 기기에서든 '+f.id+'로 로그인할 수 있어요.');}
+      step='저장 데이터';await finishRestLogin(f.nick||f.id,f.id);toast('🎉 회원가입 완료! 이제 어느 기기에서든 '+f.id+'로 로그인할 수 있어요.');}
     else{step='로그인';const a=await restSignIn(email,f.pw);step='저장 데이터';
       let name=f.id;try{const info=await restCall(IT_URL+'accounts:lookup?key='+FB.apiKey,{idToken:a.idToken});name=(info.users&&info.users[0]&&info.users[0].displayName)||f.id;}catch(e){}
-      await finishRestLogin(name);}
+      await finishRestLogin(name,f.id);}
     sdkSignInQuiet(email,f.pw);
   }catch(e){console.warn('[계정]',step,e);clearRest();m.textContent=authMsg(e)+(AUTH_MSG[e&&e.code]?'':' ['+step+' · '+((e&&e.code)||e.message||'오류')+']');}
   finally{loginBusy=false;}
@@ -219,7 +219,7 @@ async function migrateRestGoogle(idTok){
   const m=$('cloudMsg'),f=readForm(true);if(!f)return;const email=idEmail(f.id);
   try{await restSignInGoogle(idTok);m.textContent='예전 데이터에 새 아이디를 연결하는 중…';
     await restUpdate(Object.assign({email,password:f.pw},f.nick?{displayName:f.nick}:{}));
-    await finishRestLogin(f.nick||f.id);sdkSignInQuiet(email,f.pw);
+    await finishRestLogin(f.nick||f.id,f.id);sdkSignInQuiet(email,f.pw);
     toast('✅ 기존 데이터가 '+f.id+' 아이디에 연결됐어요! 이제 아이디로 로그인하세요.');}
   catch(e){console.warn('[연결]',e);clearRest();m.textContent=authMsg(e)+(AUTH_MSG[e&&e.code]?'':' ['+((e&&e.code)||e.message||'오류')+']');}
 }
@@ -289,7 +289,13 @@ async function runLoginDiag(){
 $('lgDiag').onclick=()=>{void runLoginDiag();};
 $('lgGuest').onclick=()=>enter({id:'guest',name:'게스트',type:'guest'});
 $('lgBack').onclick=()=>show('start');
-$('goOut').onclick=logout;
+// 계정 버튼: 아이디·계정 번호(uid) 확인 후 로그아웃. 계정 번호는 운영자가 예전 데이터를 옮겨 줄 때 필요해요.
+$('goOut').onclick=()=>{
+  if(!user||user.type!=='cloud'){if(confirm('지금은 '+(user&&user.type==='local'?'닉네임':'게스트')+' 플레이 중이에요 (이 기기에만 저장).\n로그아웃할까요?'))logout();return;}
+  const info='닉네임: '+user.name+(user.login?'\n아이디: '+user.login:'')+'\n계정 번호: '+user.uid+'\n\n※ 예전 구글 계정 데이터를 옮기려면 이 계정 번호와 예전 구글 이메일을 운영자에게 알려 주세요.';
+  try{navigator.clipboard&&navigator.clipboard.writeText(user.uid).catch(()=>{});}catch(e){}
+  if(confirm(info+'\n(계정 번호를 복사했어요)\n\n로그아웃할까요?'))logout();
+};
 $('goStart').onclick=()=>{if(user){buildWorld();show('world');}else show('login');};
 loadAll();
 // Firebase 미리 불러오기 + 페이지 이동 방식 로그인에서 돌아온 경우 처리
