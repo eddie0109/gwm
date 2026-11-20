@@ -30,9 +30,9 @@ const pvpStats=()=>({
 function status(t){$p('pvpStatus').textContent=t;}
 function error(e){console.error('[건우도장]',e);toast('프라이빗 배틀: '+(e&&e.message?e.message:String(e)));}
 async function needCloud(){
- if(!user||user.type!=='cloud'){toast('대전은 Google 또는 GitHub 클라우드 로그인으로 이용해 주세요.');return false;}
+ if(!user||user.type!=='cloud'){toast('대전은 건우 계정(아이디)으로 로그인해서 이용해 주세요.');return false;}
  await fbInit();
- if(!fbA.currentUser||fbA.currentUser.uid!==user.uid){toast('클라우드 로그인을 다시 진행해 주세요.');return false;}
+ if(!fbA.currentUser||fbA.currentUser.uid!==user.uid){toast(user.rest?'이 기기에서는 실시간 대전 서버에 연결하지 못했어요. 로그아웃 후 다시 로그인하거나 다른 기기에서 해 주세요.':'계정 로그인을 다시 진행해 주세요.');return false;}
  return true;
 }
 function code8(){const arr=new Uint8Array(8);crypto.getRandomValues(arr);const chars='ABCDEFGHJKLMNPQRSTUVWXYZ23456789';return Array.from(arr,v=>chars[v%chars.length]).join('');}
