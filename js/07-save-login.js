@@ -94,8 +94,10 @@ function setupGsi(){
   ldScript('https://accounts.google.com/gsi/client').then(()=>{
     google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,use_fedcm_for_prompt:true,callback:async res=>{
       const m=$('cloudMsg');m.textContent='로그인 중…';
-      try{await fbInit();const r=await fbA.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(res.credential));await finishCloudLogin(r.user);}
-      catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e);}}});
+      let step='1단계: Firebase 준비';
+      try{await fbInit();step='2단계: Firebase 로그인';const r=await fbA.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(res.credential));
+        step='3단계: 저장 데이터 불러오기';await finishCloudLogin(r.user);}
+      catch(e){console.warn('[로그인]',step,e);m.textContent=authMsg(e)+' ['+step+' · '+((e&&e.code)||(e&&e.name)||'오류')+']';}}});
     const box=$('gsiBtn');box.classList.remove('hide');$('lgG').classList.add('hide');
     google.accounts.id.renderButton(box,{theme:'filled_blue',size:'large',text:'signin_with',shape:'pill',locale:'ko',width:260});
   }).catch(e=>{gsiReady=false;console.warn('Google 로그인 버튼을 불러오지 못했어요',e);});
@@ -139,6 +141,8 @@ async function runLoginDiag(){
     try{const r=await timed(fn(),8000);lines[i]='✅ '+name+(r?' ('+r+')':'');}catch(e){lines[i]='❌ '+name+' — '+(e&&e.message||e);}show2();};
   const K=FB.apiKey,IT='https://identitytoolkit.googleapis.com';
   await check('Firebase 프로그램 받기 (gstatic)',async()=>{await fbInit();return '준비됨';});
+  await check('Firebase 로그인 초기화 (SDK)',async()=>{const t0=performance.now();await new Promise(res=>{const un=fbA.onAuthStateChanged(()=>{un();res();});});return Math.round(performance.now()-t0)+'ms';});
+  await check('SDK 방식 서버 요청 (createAuthUri)',async()=>{try{await fbA.fetchSignInMethodsForEmail('diag-test@example.com');return '정상';}catch(e){if(e&&e.code&&e.code!=='auth/network-request-failed')return '서버 응답: '+e.code;throw new Error(e&&e.code||e);}});
   await check('로그인 서버 설정 읽기 (identitytoolkit GET)',async()=>{const r=await fetch(IT+'/v1/projects?key='+K);const j=await r.json();return 'HTTP '+r.status+(j.authorizedDomains?' · 승인 도메인에 이 사이트 '+(j.authorizedDomains.includes(location.hostname)?'있음':'없음!'):'');});
   await check('로그인 요청 보내기 (identitytoolkit POST)',async()=>{const r=await fetch(IT+'/v1/accounts:signInWithIdp?key='+K,{method:'POST',headers:{'Content-Type':'application/json'},body:'{}'});return 'HTTP '+r.status+' (400이면 정상: 서버까지 도착)';});
   await check('로그인 유지 서버 (securetoken POST)',async()=>{const r=await fetch('https://securetoken.googleapis.com/v1/token?key='+K,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:'grant_type=refresh_token&refresh_token=x'});return 'HTTP '+r.status+' (400이면 정상)';});
