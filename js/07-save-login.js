@@ -51,10 +51,56 @@ async function signInFromPopupResult(r){
   if(r.credential){const m=await fbA.signInWithCredential(r.credential);return m.user;}
   throw Object.assign(new Error('로그인 정보를 넘겨받지 못했어요'),{code:'auth/missing-credential'});
 }
-function cloudPush(){if(!user||user.type!=='cloud'||!fbDb)return;clearTimeout(pushT);
-  pushT=setTimeout(()=>{fbDb.collection('users').doc(user.uid).set({d:JSON.stringify(snap()),t:Date.now()}).catch(()=>{});},1500);}
-async function cloudPull(){const r=await fbDb.collection('users').doc(user.uid).get();
-  if(r.exists){try{applyData(JSON.parse(r.data().d));}catch(e){}}save();}
+// ══ 서버 직접 요청(REST): Firebase 프로그램(SDK)을 거치지 않고 로그인·저장 ══
+// 학교 기기처럼 SDK 요청만 막히고 일반 요청은 통하는 환경을 위해, 로그인·회원가입·저장은 모두 이 방식으로 합니다.
+// 실시간 대전(건우 도장)만 SDK가 필요해서 로그인할 때 SDK에도 함께 로그인을 시도합니다.
+const REST_KEY='gw_rest_auth',IT_URL='https://identitytoolkit.googleapis.com/v1/';
+const REST_ERR={EMAIL_EXISTS:'auth/email-already-in-use',INVALID_LOGIN_CREDENTIALS:'auth/invalid-credential',INVALID_PASSWORD:'auth/invalid-credential',EMAIL_NOT_FOUND:'auth/invalid-credential',
+ OPERATION_NOT_ALLOWED:'auth/operation-not-allowed',PASSWORD_LOGIN_DISABLED:'auth/operation-not-allowed',ADMIN_ONLY_OPERATION:'auth/operation-not-allowed',TOO_MANY_ATTEMPTS_TRY_LATER:'auth/too-many-requests',USER_DISABLED:'auth/user-disabled',WEAK_PASSWORD:'auth/weak-password',INVALID_EMAIL:'auth/invalid-email',
+ MISSING_PASSWORD:'auth/missing-password',INVALID_ID_TOKEN:'auth/invalid-credential',TOKEN_EXPIRED:'auth/user-token-expired',USER_NOT_FOUND:'auth/user-token-expired',INVALID_REFRESH_TOKEN:'auth/user-token-expired',
+ FEDERATED_USER_ID_ALREADY_LINKED:'auth/credential-already-in-use',INVALID_IDP_RESPONSE:'auth/invalid-credential'};
+async function restCall(url,body,form){
+  let r;try{r=await fetch(url,{method:'POST',headers:{'Content-Type':form?'application/x-www-form-urlencoded':'application/json'},body:form?body:JSON.stringify(body)});}
+  catch(e){throw Object.assign(new Error('서버 연결 실패'),{code:'auth/network-request-failed'});}
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const msg=(j.error&&j.error.message)||('HTTP '+r.status),key=msg.split(/[ :]/)[0];throw Object.assign(new Error(msg),{code:REST_ERR[key]||('rest/'+key)});}
+  return j;
+}
+let restAuth=null;try{restAuth=JSON.parse(localStorage.getItem(REST_KEY)||'null');}catch(e){}
+function saveRest(j,uid){restAuth={uid:uid||j.localId||j.user_id,idToken:j.idToken||j.id_token,refresh:j.refreshToken||j.refresh_token,
+  exp:Date.now()+((+j.expiresIn||+j.expires_in||3600)-120)*1000};try{localStorage.setItem(REST_KEY,JSON.stringify(restAuth));}catch(e){}return restAuth;}
+function clearRest(){restAuth=null;try{localStorage.removeItem(REST_KEY);}catch(e){}}
+async function restToken(){
+  if(!restAuth)throw Object.assign(new Error('로그인 정보 없음'),{code:'auth/user-token-expired'});
+  if(Date.now()<restAuth.exp)return restAuth.idToken;
+  const j=await restCall('https://securetoken.googleapis.com/v1/token?key='+FB.apiKey,'grant_type=refresh_token&refresh_token='+encodeURIComponent(restAuth.refresh),true);
+  return saveRest(j,restAuth.uid).idToken;
+}
+const restSignIn=(email,pw)=>restCall(IT_URL+'accounts:signInWithPassword?key='+FB.apiKey,{email,password:pw,returnSecureToken:true}).then(j=>saveRest(j));
+const restSignUp=(email,pw)=>restCall(IT_URL+'accounts:signUp?key='+FB.apiKey,{email,password:pw,returnSecureToken:true}).then(j=>saveRest(j));
+const restSignInGoogle=idTok=>restCall(IT_URL+'accounts:signInWithIdp?key='+FB.apiKey,{postBody:'id_token='+encodeURIComponent(idTok)+'&providerId=google.com',requestUri:location.origin,returnSecureToken:true,returnIdpCredential:true}).then(j=>saveRest(j));
+async function restUpdate(body){const j=await restCall(IT_URL+'accounts:update?key='+FB.apiKey,Object.assign({idToken:await restToken(),returnSecureToken:true},body));if(j.idToken)saveRest(j,restAuth.uid);return j;}
+const FS_DOC=uid=>'https://firestore.googleapis.com/v1/projects/'+FB.projectId+'/databases/(default)/documents/users/'+encodeURIComponent(uid);
+async function restPull(uid){
+  const r=await fetch(FS_DOC(uid),{headers:{Authorization:'Bearer '+await restToken()}});
+  if(r.status===404)return null;if(!r.ok)throw new Error('저장 데이터를 불러오지 못했어요 (HTTP '+r.status+')');
+  const j=await r.json();return j.fields&&j.fields.d&&j.fields.d.stringValue||null;
+}
+async function restPush(uid,d){
+  const r=await fetch(FS_DOC(uid),{method:'PATCH',headers:{Authorization:'Bearer '+await restToken(),'Content-Type':'application/json'},
+    body:JSON.stringify({fields:{d:{stringValue:d},t:{integerValue:String(Date.now())}}})});
+  if(!r.ok)throw new Error('저장 실패 (HTTP '+r.status+')');
+}
+// 실시간 대전용: SDK에도 같은 아이디로 로그인 시도 (실패해도 게임 진행에는 영향 없음)
+function sdkSignInQuiet(email,pw){fbInit().then(()=>fbA.signInWithEmailAndPassword(email,pw)).catch(e=>console.warn('[대전용 로그인 실패]',e&&e.code));}
+function cloudPush(){if(!user||user.type!=='cloud')return;clearTimeout(pushT);
+  pushT=setTimeout(()=>{const d=JSON.stringify(snap());
+    if(user.rest)restPush(user.uid,d).catch(e=>console.warn('[클라우드 저장]',e));
+    else if(fbDb)fbDb.collection('users').doc(user.uid).set({d,t:Date.now()}).catch(()=>{});},1500);}
+async function cloudPull(){let d=null;
+  if(user.rest)d=await restPull(user.uid);
+  else{const r=await fbDb.collection('users').doc(user.uid).get();d=r.exists?r.data().d:null;}
+  if(d){try{applyData(JSON.parse(d));}catch(e){}}save();}
 function setUser(u){user=u;UID=u.type==='guest'?'guest':u.id;try{localStorage.setItem('gw_session',JSON.stringify(u));}catch(e){}}
 function enter(u){setUser(u);loadAll();save();buildWorld();show('world');}
 // ── 클라우드 로그인
@@ -95,6 +141,9 @@ const authMsg=e=>'⚠ '+(AUTH_MSG[e&&e.code]||('로그인 실패: '+((e&&e.messa
 async function finishCloudLogin(u,name){
   const em=u.email||'',nm=name||u.displayName||(em.endsWith('@'+ID_DOMAIN)?em.split('@')[0]:em)||'건우';
   setUser({id:'c_'+u.uid,uid:u.uid,name:nm,type:'cloud'});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
+}
+async function finishRestLogin(name){
+  setUser({id:'c_'+restAuth.uid,uid:restAuth.uid,name:name||'건우',type:'cloud',rest:true});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
 }
 // 페이지 이동 방식이 브라우저에 막혀 아무 일도 안 일어나면 10초 뒤 안내
 function redirectWatch(){setTimeout(()=>{if(document.visibilityState==='visible'&&!$('login').classList.contains('hide')&&/이동해요/.test($('cloudMsg').textContent)){
@@ -139,14 +188,16 @@ function readForm(join){
 function readMigrateForm(){const f=readForm(true);if(!f)$('cloudMsg').textContent+=' (기존 데이터를 연결할 새 아이디·비밀번호를 위 칸에 먼저 입력해 주세요)';return f;}
 async function accountSubmit(){
   if(loginBusy)return;const m=$('cloudMsg'),join=acMode==='join',f=readForm(join);if(!f)return;
-  loginBusy=true;let step='준비';
+  loginBusy=true;let step='준비';const email=idEmail(f.id);
   try{
-    m.textContent=join?'가입하는 중…':'로그인 중…';await fbInit();
-    if(join){step='가입';const r=await fbA.createUserWithEmailAndPassword(idEmail(f.id),f.pw);
-      await r.user.updateProfile({displayName:f.nick||f.id}).catch(()=>{});
-      await finishCloudLogin(r.user,f.nick||f.id);toast('🎉 회원가입 완료! 이제 어느 기기에서든 '+f.id+'로 로그인할 수 있어요.');}
-    else{step='로그인';const r=await fbA.signInWithEmailAndPassword(idEmail(f.id),f.pw);await finishCloudLogin(r.user);}
-  }catch(e){console.warn('[계정]',step,e);m.textContent=authMsg(e)+(AUTH_MSG[e&&e.code]?'':' ['+step+' · '+((e&&e.code)||'오류')+']');}
+    m.textContent=join?'가입하는 중…':'로그인 중…';
+    if(join){step='가입';await restSignUp(email,f.pw);step='닉네임 저장';const j=await restUpdate({displayName:f.nick||f.id}).catch(()=>null);
+      step='저장 데이터';await finishRestLogin(f.nick||f.id);toast('🎉 회원가입 완료! 이제 어느 기기에서든 '+f.id+'로 로그인할 수 있어요.');}
+    else{step='로그인';const a=await restSignIn(email,f.pw);step='저장 데이터';
+      let name=f.id;try{const info=await restCall(IT_URL+'accounts:lookup?key='+FB.apiKey,{idToken:a.idToken});name=(info.users&&info.users[0]&&info.users[0].displayName)||f.id;}catch(e){}
+      await finishRestLogin(name);}
+    sdkSignInQuiet(email,f.pw);
+  }catch(e){console.warn('[계정]',step,e);clearRest();m.textContent=authMsg(e)+(AUTH_MSG[e&&e.code]?'':' ['+step+' · '+((e&&e.code)||e.message||'오류')+']');}
   finally{loginBusy=false;}
 }
 $('acGo').onclick=()=>{void accountSubmit();};
@@ -163,6 +214,15 @@ async function migrateWith(u){
     toast('✅ 기존 데이터가 '+f.id+' 아이디에 연결됐어요! 이제 아이디로 로그인하세요.');
   }catch(e){console.warn('[연결]',e);await fbA.signOut().catch(()=>{});m.textContent=authMsg(e)+(AUTH_MSG[e&&e.code]?'':' ['+((e&&e.code)||'오류')+']');}
 }
+// 구글 확인(ID 토큰) → 예전 계정으로 로그인 → 그 계정에 아이디·비밀번호 추가 (서버 직접 요청, uid 유지)
+async function migrateRestGoogle(idTok){
+  const m=$('cloudMsg'),f=readForm(true);if(!f)return;const email=idEmail(f.id);
+  try{await restSignInGoogle(idTok);m.textContent='예전 데이터에 새 아이디를 연결하는 중…';
+    await restUpdate(Object.assign({email,password:f.pw},f.nick?{displayName:f.nick}:{}));
+    await finishRestLogin(f.nick||f.id);sdkSignInQuiet(email,f.pw);
+    toast('✅ 기존 데이터가 '+f.id+' 아이디에 연결됐어요! 이제 아이디로 로그인하세요.');}
+  catch(e){console.warn('[연결]',e);clearRest();m.textContent=authMsg(e)+(AUTH_MSG[e&&e.code]?'':' ['+((e&&e.code)||e.message||'오류')+']');}
+}
 // ── 기존 데이터 옮기기용 Google 본인 확인 버튼 (Google Identity Services)
 let gsiReady=false;
 function setupGsi(){
@@ -172,7 +232,7 @@ function setupGsi(){
   ldScript('https://accounts.google.com/gsi/client').then(()=>{
     google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,use_fedcm_for_prompt:true,callback:async res=>{
       const m=$('cloudMsg');if(!readMigrateForm())return;m.textContent='예전 구글 계정 확인 중…';
-      try{await fbInit();const r=await fbA.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(res.credential));await migrateWith(r.user);}
+      try{await migrateRestGoogle(res.credential);}
       catch(e){console.warn('[연결]',e);m.textContent=authMsg(e)+' ['+((e&&e.code)||'오류')+']';}}});
     google.accounts.id.renderButton($('gsiBtn'),{theme:'outline',size:'large',text:'continue_with',shape:'pill',locale:'ko',width:230});
   }).catch(e=>{gsiReady=false;$('gsiBtn').textContent='구글 확인 버튼을 불러오지 못했어요.';console.warn(e);});
@@ -201,7 +261,7 @@ async function cloudLogin(k){const m=$('cloudMsg');if(k==='gh'&&!readMigrateForm
   }catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e)+' ['+((e&&e.code)||'오류')+']';}
   finally{loginBusy=false;}
 }
-function logout(){try{fbA&&fbA.signOut();popA&&popA.signOut();}catch(e){}user=null;UID='guest';try{localStorage.removeItem('gw_session');}catch(e){}loadAll();show('login');}
+function logout(){clearRest();try{fbA&&fbA.signOut();popA&&popA.signOut();}catch(e){}user=null;UID='guest';try{localStorage.removeItem('gw_session');}catch(e){}loadAll();show('login');}
 $('lgGH').onclick=()=>cloudLogin('gh');
 $('lgLocal').onclick=()=>{const n=$('nick').value.trim().slice(0,12);if(!n){toast('닉네임을 입력하세요');return;}enter({id:'n_'+n.toLowerCase(),name:n,type:'local'});};
 // ── 로그인 진단: 로그인에 필요한 서버마다 실제 요청을 보내 어디서 막히는지 표시 (아무 계정 정보도 보내지 않음)
@@ -240,6 +300,7 @@ if(FB)fbInit().then(async()=>{
   catch(e){show('login');$('cloudMsg').textContent=authMsg(e);}
 }).catch(e=>console.warn('Firebase 준비 실패',e));
 (async function restore(){try{const s=JSON.parse(localStorage.getItem('gw_session')||'null');if(!s)return;
+  if(s.type==='cloud'&&s.rest){if(!restAuth){show('login');return;}setUser(s);loadAll();await cloudPull();if(!$('select').classList.contains('hide'))buildGrid();return;}
   if(s.type==='cloud'){if(!FB)return;await fbInit();const u=await new Promise(r=>{const un=fbA.onAuthStateChanged(x=>{un();r(x);});});
     if(u){setUser(s);loadAll();await cloudPull();if(!$('select').classList.contains('hide'))buildGrid();}}
   else{setUser(s);loadAll();}}catch(e){}})();
