@@ -29,7 +29,9 @@ function loadAll(){const j=(k,d)=>{try{return JSON.parse(localStorage.getItem(K(
 let fbA=null,fbDb=null,pushT=0,mig={};
 function save(){try{const d=snap();localStorage.setItem(K('gw_clear'),JSON.stringify(d.clear));localStorage.setItem(K('gw_trc'),JSON.stringify(d.trc));localStorage.setItem(K('gw_lv'),JSON.stringify(d.lv));localStorage.setItem(K('gw_xp'),String(d.xp));localStorage.setItem(K('gw_meta'),JSON.stringify(d.meta));}catch(e){}cloudPush();}
 const ldScript=src=>new Promise((ok,no)=>{const s=document.createElement('script');s.src=src;s.onload=ok;s.onerror=()=>no(new Error('스크립트를 불러오지 못했어요'));document.head.appendChild(s);});
-async function fbInit(){if(!FB)throw new Error('Firebase 설정이 아직 없어요 (코드의 FB 변수)');if(fbA)return;const B='https://www.gstatic.com/firebasejs/10.12.2/';
+let fbReady=null; // 여러 곳에서 동시에 불러도 Firebase는 한 번만 로드
+function fbInit(){return fbReady||(fbReady=fbLoad().catch(e=>{fbReady=null;throw e;}));}
+async function fbLoad(){if(!FB)throw new Error('Firebase 설정이 아직 없어요 (코드의 FB 변수)');if(fbA)return;const B='https://www.gstatic.com/firebasejs/10.12.2/';
   await ldScript(B+'firebase-app-compat.js');await ldScript(B+'firebase-auth-compat.js');await ldScript(B+'firebase-firestore-compat.js');
   firebase.initializeApp(FB);fbA=firebase.auth();fbDb=firebase.firestore();}
 function cloudPush(){if(!user||user.type!=='cloud'||!fbDb)return;clearTimeout(pushT);
@@ -38,10 +40,45 @@ async function cloudPull(){const r=await fbDb.collection('users').doc(user.uid).
   if(r.exists){try{applyData(JSON.parse(r.data().d));}catch(e){}}save();}
 function setUser(u){user=u;UID=u.type==='guest'?'guest':u.id;try{localStorage.setItem('gw_session',JSON.stringify(u));}catch(e){}}
 function enter(u){setUser(u);loadAll();save();buildWorld();show('world');}
-async function cloudLogin(k){const m=$('cloudMsg');m.textContent='로그인 중…';
-  try{await fbInit();const p=k==='g'?new firebase.auth.GoogleAuthProvider():new firebase.auth.GithubAuthProvider();const r=await fbA.signInWithPopup(p);
-    setUser({id:'c_'+r.user.uid,uid:r.user.uid,name:r.user.displayName||r.user.email||'건우',type:'cloud'});loadAll();await cloudPull();buildWorld();show('world');m.textContent='';}
-  catch(e){m.textContent='⚠ '+(e.message||e);}}
+// ── 클라우드 로그인
+// 1) Firebase를 페이지 열 때 미리 불러와 둬서, 버튼을 누르는 즉시 로그인 창이 열리게 합니다(늦게 열리면 브라우저가 창을 막거나 닫음).
+// 2) 팝업이 막히는 환경이면 페이지 이동 방식(redirect)으로 다시 시도합니다.
+// 3) 카카오톡·인스타그램 등 앱 안 브라우저는 구글이 로그인을 막으므로 외부 브라우저로 열도록 안내합니다.
+const IN_APP=/KAKAOTALK|Instagram|NAVER\(|FBAN|FBAV|Line\/|DaumApps|everytimeApp|BAND\//i.test(navigator.userAgent);
+const AUTH_MSG={
+ 'auth/popup-closed-by-user':'로그인 창이 완료 전에 닫혔어요. 다시 눌러 주세요. 창이 저절로 바로 닫힌다면 팝업 차단을 풀거나 크롬·사파리에서 열어 주세요.',
+ 'auth/cancelled-popup-request':'로그인 창이 이미 열려 있어요. 열린 창에서 계속해 주세요.',
+ 'auth/popup-blocked':'브라우저가 로그인 창을 막았어요. 주소창의 팝업 차단을 허용한 뒤 다시 눌러 주세요.',
+ 'auth/unauthorized-domain':'이 주소는 Firebase 승인 도메인에 없어요. Firebase 콘솔 → Authentication → 설정 → 승인된 도메인에 지금 사이트 주소를 추가해 주세요.',
+ 'auth/network-request-failed':'인터넷 연결이 불안정해요. 잠시 후 다시 시도해 주세요.',
+ 'auth/account-exists-with-different-credential':'같은 이메일로 다른 방식(구글/깃허브) 로그인이 이미 있어요. 처음 쓰던 방식으로 로그인해 주세요.',
+ 'auth/web-storage-unsupported':'이 브라우저는 로그인 정보를 저장할 수 없어요(사생활 보호 모드 등). 일반 창에서 열어 주세요.',
+ 'auth/operation-not-allowed':'Firebase 콘솔에서 이 로그인 방식이 꺼져 있어요. Authentication → 로그인 방법에서 켜 주세요.'
+};
+const authMsg=e=>'⚠ '+(AUTH_MSG[e&&e.code]||('로그인 실패: '+((e&&e.message)||e)));
+async function finishCloudLogin(u){
+  setUser({id:'c_'+u.uid,uid:u.uid,name:u.displayName||u.email||'건우',type:'cloud'});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
+}
+let loginBusy=false;
+async function cloudLogin(k){const m=$('cloudMsg');
+  if(IN_APP){m.textContent='⚠ 카카오톡·인스타그램 같은 앱 안 브라우저에서는 구글이 로그인을 막아요. 화면 메뉴(⋮ 또는 공유)에서 "다른 브라우저로 열기"를 눌러 크롬·사파리에서 열어 주세요.';return;}
+  if(loginBusy)return;loginBusy=true;
+  try{
+    if(!fbA){m.textContent='로그인 준비 중…';await fbInit();m.textContent='준비됐어요! 로그인 버튼을 한 번 더 눌러 주세요.';return;} // 준비 후 첫 클릭은 창이 막힐 수 있어 다시 누르게 함
+    m.textContent='로그인 창을 여는 중…';
+    const p=k==='g'?new firebase.auth.GoogleAuthProvider():new firebase.auth.GithubAuthProvider();
+    if(k==='g')p.setCustomParameters({prompt:'select_account'});
+    let r;
+    try{r=await fbA.signInWithPopup(p);}
+    catch(e){
+      if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){
+        m.textContent='팝업이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
+        await fbA.signInWithRedirect(p);return;}
+      throw e;}
+    await finishCloudLogin(r.user);
+  }catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e);}
+  finally{loginBusy=false;}
+}
 function logout(){try{fbA&&fbA.signOut();}catch(e){}user=null;UID='guest';try{localStorage.removeItem('gw_session');}catch(e){}loadAll();show('login');}
 $('lgG').disabled=$('lgGH').disabled=!FB;
 $('cloudMsg').textContent=FB?'':'(클라우드 로그인은 Firebase 설정 후 사용할 수 있어요)';
@@ -52,6 +89,13 @@ $('lgBack').onclick=()=>show('start');
 $('goOut').onclick=logout;
 $('goStart').onclick=()=>{if(user){buildWorld();show('world');}else show('login');};
 loadAll();
+// Firebase 미리 불러오기 + 페이지 이동 방식 로그인에서 돌아온 경우 처리
+if(FB)fbInit().then(async()=>{
+  let pending=false;try{pending=!!sessionStorage.getItem('gw_login_redirect');sessionStorage.removeItem('gw_login_redirect');}catch(_){}
+  if(!pending)return;
+  try{const r=await fbA.getRedirectResult();if(r&&r.user)await finishCloudLogin(r.user);else{show('login');$('cloudMsg').textContent='⚠ 로그인이 완료되지 않았어요. 다시 시도하거나 크롬·사파리에서 열어 주세요.';}}
+  catch(e){show('login');$('cloudMsg').textContent=authMsg(e);}
+}).catch(e=>console.warn('Firebase 준비 실패',e));
 (async function restore(){try{const s=JSON.parse(localStorage.getItem('gw_session')||'null');if(!s)return;
   if(s.type==='cloud'){if(!FB)return;await fbInit();const u=await new Promise(r=>{const un=fbA.onAuthStateChanged(x=>{un();r(x);});});
     if(u){setUser(s);loadAll();await cloudPull();if(!$('select').classList.contains('hide'))buildGrid();}}
