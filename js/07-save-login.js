@@ -11,7 +11,7 @@ const FB={
 // Firebase 콘솔 → Authentication → 로그인 방법 → Google → 「웹 SDK 구성」의 웹 클라이언트 ID를 붙여넣으면
 // firebaseapp.com 중계 페이지를 거치지 않는 방식으로 로그인합니다(브라우저 사생활 보호 기능에 막히지 않음).
 // 비워 두면 기존 팝업/페이지 이동 방식을 씁니다.
-const GOOGLE_CLIENT_ID="";
+const GOOGLE_CLIENT_ID="761839681560-irahcrvv5mb82ng1lgr9mhspg7f0pdgf.apps.googleusercontent.com";
 let basicLv={wallet:1,worker:1,research:1,accounting:1,baseHp:1,cannon:1},upCategory='N',treasureChapter=0;
 let UID='guest',user=null,cleared={},trc={},lv={},plusLv={},xp=0,tk=2,em=0,rt=1,own={},fsel={},tn={},form=[],qc={},qs={wins:0,kills:0,cn:0,wk:1,ga:0},seenEnemies={},vtsCleared={},daily={last:'',streak:0,total:0,history:[]},energy={value:100,updated:Date.now()},CH=0;
 const K=k=>k+(UID==='guest'?'':'@'+UID); // 게스트는 예전 저장 키를 그대로 사용
