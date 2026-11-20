@@ -91,6 +91,49 @@ async function restPush(uid,d){
     body:JSON.stringify({fields:{d:{stringValue:d},t:{integerValue:String(Date.now())}}})});
   if(!r.ok)throw new Error('저장 실패 (HTTP '+r.status+')');
 }
+// ══ 대전용 Firestore 직접 요청 (SDK 없이 같은 사용법) ══
+// 프라이빗 배틀 코드가 쓰는 collection/doc/get/set/update/delete/add/onSnapshot/runTransaction을
+// Firestore REST API + 짧은 간격 확인(polling)으로 구현합니다. 보안 규칙은 SDK와 똑같이 적용돼요.
+const FS_BASE='https://firestore.googleapis.com/v1/projects/'+FB.projectId+'/databases/(default)/documents/';
+const fsEnc=v=>v===null||v===undefined?{nullValue:null}:typeof v==='boolean'?{booleanValue:v}:typeof v==='number'?(Number.isInteger(v)?{integerValue:String(v)}:{doubleValue:Number.isFinite(v)?v:0})
+  :typeof v==='string'?{stringValue:v}:Array.isArray(v)?{arrayValue:{values:v.map(fsEnc)}}:{mapValue:{fields:fsEncF(v)}};
+const fsEncF=o=>Object.fromEntries(Object.entries(o).filter(([,x])=>x!==undefined&&typeof x!=='function').map(([k,x])=>[k,fsEnc(x)]));
+const fsDec=v=>!v?null:'nullValue' in v?null:'booleanValue' in v?v.booleanValue:'integerValue' in v?Number(v.integerValue):'doubleValue' in v?v.doubleValue:'stringValue' in v?v.stringValue
+  :'arrayValue' in v?(v.arrayValue.values||[]).map(fsDec):'mapValue' in v?fsDecF(v.mapValue.fields||{}):'timestampValue' in v?v.timestampValue:null;
+const fsDecF=f=>Object.fromEntries(Object.entries(f||{}).map(([k,x])=>[k,fsDec(x)]));
+async function fsReq(method,path,body,query,opt){
+  let r;try{r=await fetch(FS_BASE+path+(query?'?'+query:''),{method,keepalive:!!(opt&&opt.keepalive),headers:Object.assign({Authorization:'Bearer '+await restToken()},body?{'Content-Type':'application/json'}:{}),body:body?JSON.stringify(body):undefined});}
+  catch(e){throw Object.assign(new Error('대전 서버에 연결하지 못했어요'),{code:'unavailable'});}
+  if(method==='GET'&&r.status===404)return null;
+  const j=await r.json().catch(()=>({}));
+  if(!r.ok){const st=(j.error&&j.error.status)||'HTTP '+r.status;throw Object.assign(new Error(st==='PERMISSION_DENIED'?'권한이 없어요 (방 상태가 바뀌었을 수 있어요)':st==='FAILED_PRECONDITION'?'다른 사람이 먼저 참가했어요':st),{code:st});}
+  return j;
+}
+const fsMask=obj=>Object.keys(obj).map(k=>'updateMask.fieldPaths='+encodeURIComponent(k)).join('&');
+const fsSnap=r=>r?{exists:true,data:()=>fsDecF(r.fields),_ut:r.updateTime}:{exists:false,data:()=>undefined};
+function restDoc(path){return {path,
+  get:async()=>fsSnap(await fsReq('GET',path)),
+  set:obj=>fsReq('PATCH',path,{fields:fsEncF(obj)}),
+  update:(obj,opt)=>fsReq('PATCH',path,{fields:fsEncF(obj)},fsMask(obj)+'&currentDocument.exists=true',opt),
+  delete:()=>fsReq('DELETE',path),
+  onSnapshot(cb,err){let stop=false,last=null;
+    const tick=async()=>{if(stop)return;try{const r=await fsReq('GET',path),ut=r?r.updateTime:'none';if(ut!==last){last=ut;if(!stop)cb(fsSnap(r));}}catch(e){err&&err(e);}if(!stop)setTimeout(tick,700);};
+    tick();return()=>{stop=true;};},
+  collection:name=>restCol(path+'/'+name)};}
+function restCol(path){return {
+  doc:id=>restDoc(path+'/'+id),
+  add:obj=>fsReq('POST',path,{fields:fsEncF(obj)}),
+  onSnapshot(cb,err){let stop=false;const seen=new Set();
+    const tick=async()=>{if(stop)return;try{const r=await fsReq('GET',path,null,'pageSize=100'),ch=[];
+      for(const d of (r&&r.documents)||[]){const id=d.name.split('/').pop();if(seen.has(id))continue;seen.add(id);ch.push({type:'added',doc:{id,data:()=>fsDecF(d.fields),ref:restDoc(path+'/'+id)}});}
+      if(ch.length&&!stop)cb({docChanges:()=>ch});}catch(e){err&&err(e);}if(!stop)setTimeout(tick,450);};
+    tick();return()=>{stop=true;};}};}
+// 참가(트랜잭션): 읽은 시점 이후 문서가 바뀌었으면 거절(updateTime 조건)
+const restFs={collection:name=>restCol(name),
+  async runTransaction(fn){const reads=new Map(),writes=[];
+    await fn({get:async ref=>{const s=await ref.get();reads.set(ref.path,s._ut);return s;},update:(ref,obj)=>writes.push([ref,obj])});
+    for(const [ref,obj] of writes){const ut=reads.get(ref.path);
+      await fsReq('PATCH',ref.path,{fields:fsEncF(obj)},fsMask(obj)+(ut?'&currentDocument.updateTime='+encodeURIComponent(ut):'&currentDocument.exists=true'));}}};
 // 실시간 대전용: SDK에도 같은 아이디로 로그인 시도 (실패해도 게임 진행에는 영향 없음)
 function sdkSignInQuiet(email,pw){fbInit().then(()=>fbA.signInWithEmailAndPassword(email,pw)).catch(e=>console.warn('[대전용 로그인 실패]',e&&e.code));}
 function cloudPush(){if(!user||user.type!=='cloud')return;clearTimeout(pushT);
