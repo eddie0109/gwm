@@ -7,6 +7,11 @@ const FB={
   projectId:"gunwoo-war",
   appId:"1:761839681560:web:d4a0c2ad9607feb948036d"
 };
+// ▼▼ Google 공식 로그인 버튼(Google Identity Services)용 웹 클라이언트 ID. 비밀값이 아니에요.
+// Firebase 콘솔 → Authentication → 로그인 방법 → Google → 「웹 SDK 구성」의 웹 클라이언트 ID를 붙여넣으면
+// firebaseapp.com 중계 페이지를 거치지 않는 방식으로 로그인합니다(브라우저 사생활 보호 기능에 막히지 않음).
+// 비워 두면 기존 팝업/페이지 이동 방식을 씁니다.
+const GOOGLE_CLIENT_ID="761839681560-irahcrvv5mb82ng1lgr9mhspg7f0pdgf.apps.googleusercontent.com";
 let basicLv={wallet:1,worker:1,research:1,accounting:1,baseHp:1,cannon:1},upCategory='N',treasureChapter=0;
 let UID='guest',user=null,cleared={},trc={},lv={},plusLv={},xp=0,tk=2,em=0,rt=1,own={},fsel={},tn={},form=[],qc={},qs={wins:0,kills:0,cn:0,wk:1,ga:0},seenEnemies={},vtsCleared={},daily={last:'',streak:0,total:0,history:[]},energy={value:100,updated:Date.now()},CH=0;
 const K=k=>k+(UID==='guest'?'':'@'+UID); // 게스트는 예전 저장 키를 그대로 사용
@@ -68,6 +73,23 @@ const authMsg=e=>'⚠ '+(AUTH_MSG[e&&e.code]||('로그인 실패: '+((e&&e.messa
 async function finishCloudLogin(u){
   setUser({id:'c_'+u.uid,uid:u.uid,name:u.displayName||u.email||'건우',type:'cloud'});loadAll();await cloudPull();buildWorld();show('world');$('cloudMsg').textContent='';
 }
+// 페이지 이동 방식이 브라우저에 막혀 아무 일도 안 일어나면 10초 뒤 안내
+function redirectWatch(){setTimeout(()=>{if(document.visibilityState==='visible'&&!$('login').classList.contains('hide')&&/이동해요/.test($('cloudMsg').textContent)){
+  try{sessionStorage.removeItem('gw_login_redirect');}catch(_){}
+  $('cloudMsg').textContent='⚠ 이 브라우저가 Firebase 로그인 중계 페이지를 막고 있어요. 다른 브라우저(크롬·사파리)로 시도하거나, 닉네임 로그인으로 먼저 플레이해 주세요. (개발자: GOOGLE_CLIENT_ID를 설정하면 해결됩니다)';loginBusy=false;}},10000);}
+// ── Google 공식 로그인 버튼 (GOOGLE_CLIENT_ID가 있을 때): 받은 ID 토큰으로 Firebase에 직접 로그인
+let gsiReady=false;
+function setupGsi(){
+  if(!GOOGLE_CLIENT_ID||gsiReady||IN_APP)return;gsiReady=true;
+  ldScript('https://accounts.google.com/gsi/client').then(()=>{
+    google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,use_fedcm_for_prompt:true,callback:async res=>{
+      const m=$('cloudMsg');m.textContent='로그인 중…';
+      try{await fbInit();const r=await fbA.signInWithCredential(firebase.auth.GoogleAuthProvider.credential(res.credential));await finishCloudLogin(r.user);}
+      catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e);}}});
+    const box=$('gsiBtn');box.classList.remove('hide');$('lgG').classList.add('hide');
+    google.accounts.id.renderButton(box,{theme:'filled_blue',size:'large',text:'signin_with',shape:'pill',locale:'ko',width:260});
+  }).catch(e=>{gsiReady=false;console.warn('Google 로그인 버튼을 불러오지 못했어요',e);});
+}
 let loginBusy=false;
 async function cloudLogin(k){const m=$('cloudMsg');
   if(IN_APP){m.textContent='⚠ 카카오톡·인스타그램 같은 앱 안 브라우저에서는 구글이 로그인을 막아요. 화면 메뉴(⋮ 또는 공유)에서 "다른 브라우저로 열기"를 눌러 크롬·사파리에서 열어 주세요.';return;}
@@ -84,10 +106,10 @@ async function cloudLogin(k){const m=$('cloudMsg');
         m.textContent='연결 상태를 확인하는 중…';const why=await probeAuthNet();
         if(why){m.textContent=why;return;}
         m.textContent='팝업 방식이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
-        await fbA.signInWithRedirect(p);return;}
+        redirectWatch();await fbA.signInWithRedirect(p);return;}
       if(e&&(e.code==='auth/popup-blocked'||e.code==='auth/operation-not-supported-in-this-environment')){
         m.textContent='팝업이 막혀서 로그인 페이지로 이동해요…';try{sessionStorage.setItem('gw_login_redirect',k);}catch(_){}
-        await fbA.signInWithRedirect(p);return;}
+        redirectWatch();await fbA.signInWithRedirect(p);return;}
       throw e;}
     await finishCloudLogin(r.user);
   }catch(e){console.warn('[로그인]',e);m.textContent=authMsg(e);}
@@ -96,7 +118,7 @@ async function cloudLogin(k){const m=$('cloudMsg');
 function logout(){try{fbA&&fbA.signOut();}catch(e){}user=null;UID='guest';try{localStorage.removeItem('gw_session');}catch(e){}loadAll();show('login');}
 $('lgG').disabled=$('lgGH').disabled=!FB;
 $('cloudMsg').textContent=FB?'':'(클라우드 로그인은 Firebase 설정 후 사용할 수 있어요)';
-$('lgG').onclick=()=>cloudLogin('g');$('lgGH').onclick=()=>cloudLogin('gh');
+$('lgG').onclick=()=>cloudLogin('g');setupGsi();$('lgGH').onclick=()=>cloudLogin('gh');
 $('lgLocal').onclick=()=>{const n=$('nick').value.trim().slice(0,12);if(!n){toast('닉네임을 입력하세요');return;}enter({id:'n_'+n.toLowerCase(),name:n,type:'local'});};
 $('lgGuest').onclick=()=>enter({id:'guest',name:'게스트',type:'guest'});
 $('lgBack').onclick=()=>show('start');
