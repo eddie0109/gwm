@@ -112,3 +112,15 @@
 #gsiBtn{display:flex;align-items:center;justify-content:center;flex:1 1 70px;min-height:44px}
 .diag-btn{font-size:.85rem;padding:6px 10px;background:linear-gradient(#f2f2f2,#cfcfcf);border-color:#555}
 #diagOut{white-space:pre-wrap;font-size:11px;line-height:1.45;max-height:170px;overflow:auto;background:#1b1b1b;color:#eaeaea;padding:8px;border-radius:8px;margin:0;-webkit-user-select:text;user-select:text}
+/* 건우 계정 (아이디·비밀번호) */
+#login .box{max-height:100%;overflow-y:auto;padding-bottom:8px}
+.acct-tabs{display:flex;gap:6px;margin:8px 0 6px}
+.acct-tabs button{flex:1;padding:6px;font-size:.92rem;background:linear-gradient(#eee,#cfcfcf);border-color:#666}
+.acct-tabs button.on{background:linear-gradient(#ffe27a,#ffc83d 55%,#ff9d1c);border-color:#7a4a00}
+.acct-form{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.acct-form input{padding:8px 10px}
+.acct-form button{grid-column:1/-1;padding:9px}
+#acMigrate{margin-top:6px;font-size:.85rem}
+#acMigrate summary{cursor:pointer;font-weight:800}
+.acct-help{font-size:.78rem;line-height:1.5;margin:6px 0!important}
+#gsiBtn{display:flex;align-items:center;justify-content:center;min-height:44px}
