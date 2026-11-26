@@ -39,6 +39,7 @@ function update(dt){
       else if(u.t<=0){u.t=u.T.cd;u.ad=u.T.adFix||Math.min(AD[u.T.an]||0.35,u.T.cd*0.8);u.at=u.ad;
         if(u.T.hitTimes){u.hq=u.T.hitTimes.slice();u.ht=0;}
         else if(u.T.hitDelay)u.dh=u.T.hitDelay; // 기관차: 돌진이 닿는 순간에 판정
+        if(u.T.zone)u.ztx=target&&best<=R?target.x:baseX; // 원거리 범위: 공격 시작 때 가장 가까운 적(없으면 성)에 착탄
         else strike(u,dir,target,best,bd,bs,R);}
     }else{ // 이동: 걷기 모션 + 먼지
       u.mv=1;u.x+=dir*u.T.speed*sf*dt;
@@ -78,6 +79,9 @@ function update(dt){
 }
 
 function strike(u,dir,target,best,bd,bs,R){
+  if(u.T.zone&&u.ztx!=null){const z=u.T.zone,cx=u.ztx; // 착탄 지점 중심 범위 (은하)
+    for(const o of S.units)if(o.team!==u.team&&o.hp>0&&Math.abs(o.x-cx)<=z)hitT(u,o,u.T.atk);
+    const baseX=u.team===0?75:W-75;if(Math.abs(baseX-cx)<=z+40)bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);return;}
   if(u.T.area){for(const o of S.units){if(o.team!==u.team&&o.hp>0){const dd=(o.x-u.x)*dir;if(dd>-10&&dd<=R)hitT(u,o,u.T.atk);}}if(bd<=R)bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);}
   else if(target&&best<=R&&target.hp>0)hitT(u,target,u.T.atk);else if(bd<=R)bs.hp-=u.T.atk*(u.team===1?treasureIncomingMult(u.T.ty,S.tsd):1);
 }

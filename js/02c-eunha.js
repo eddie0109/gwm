@@ -17,6 +17,17 @@ function frame(c,anim,f,x,y,s,flip){
   else c.drawImage(img,f*META.fw,a.row*META.fh,META.fw,META.fh,x-META.ax*s,y-META.ay*s,META.fw*s,META.fh*s);
   c.restore();
 }
+// 공격 칸을 두 부분으로 나눠 그리기: 'body'=은하 몸통(원본 x≥72, y≥84), 'fx'=그 밖의 효과(마법진·운석·빛기둥·폭발)
+// 원거리 공격일 때 효과 부분만 목표 지점으로 옮겨 그립니다.
+const BODY={x:72,y:84};
+function framePart(c,anim,f,x,y,s,flip,part){
+  const a=META.anims[anim],L=-META.ax*s,T=-META.ay*s;c.save();c.imageSmoothingEnabled=false;c.translate(x,y);if(flip)c.scale(-1,1);
+  c.beginPath();
+  if(part==='body')c.rect(L+BODY.x*s,T+BODY.y*s,(META.fw-BODY.x)*s,(META.fh-BODY.y)*s);
+  else{c.rect(L,T,META.fw*s,META.fh*s);c.rect(L+BODY.x*s,T+BODY.y*s,(META.fw-BODY.x)*s,(META.fh-BODY.y)*s);}
+  c.clip(part==='body'?'nonzero':'evenodd');
+  c.drawImage(img,f*META.fw,a.row*META.fh,META.fw,META.fh,L,T,META.fw*s,META.fh*s);c.restore();
+}
 // 아이콘: 공격대기 첫 칸의 은하 부분만 (원본 bbox 75..158 × 85..157)
 window.drawEunhaIcon=function(c,x,y,w,h,flip){
   if(!ready()){c.fillStyle='#6a5cff';c.beginPath();c.ellipse(x+w/2,y+h/2,w/2.2,h/3,-0.3,0,7);c.fill();img.addEventListener('load',()=>{},{once:true});return;}
@@ -34,7 +45,7 @@ function step(st,u,dt,state,t,f,fwd){ // fwd: 앞쪽 x 방향(아군 -1, 상대 
   // 공전하는 별 + 핵 맥박은 그리기에서 시간으로 처리. 여기서는 입자 생성/이동.
   if(state==='walk'){st.trail-=dt;if(st.trail<0){st.trail=0.03;addP(st,{x:u.x-fwd*(40+Math.random()*50),y:GY-50-Math.random()*40,vx:-fwd*(20+Math.random()*40),vy:-6+Math.random()*12,life:0.9,max:0.9,k:'dust',col:STAR_COLS[(Math.random()*4)|0]});}}
   if(state==='attack'){
-    const ix=u.x+fwd*(-IMPACT_X)*SC;
+    const ix=u.ztx!=null?u.ztx:u.x+fwd*(-IMPACT_X)*SC; // 착탄 지점: 공격 시작 때 정한 목표 위치
     if(f>=8&&f<=10&&!st.met[f]){st.met[f]=1; // 운석 3개: 하늘에서 비스듬히 낙하
       for(let k=0;k<2;k++)addP(st,{x:ix+(Math.random()-0.5)*70-fwd*90,y:-20-Math.random()*40,vx:fwd*(150+Math.random()*60),vy:420+Math.random()*80,life:0.32,max:0.32,k:'met',col:k?'#ffe27a':'#9fd8ff'});}
     if(f===11&&!st.boom){st.boom=1;st.flash=0.18;st.pillar=0.45;st.ring.push({x:ix,t:0},{x:ix,t:-0.08});
@@ -71,7 +82,7 @@ function drawFront(c,u,st,tm,cx,cy,state,f,fwd){
   // 핵 반짝임
   const core=0.6+0.4*Math.sin(tm*5);twinkle(c,cx+fwd*6,cy+2,6+core*5,'#fff6c8',0.7*core);
   if(state==='attack'){
-    const ix=u.x+fwd*(-IMPACT_X)*SC;
+    const ix=u.ztx!=null?u.ztx:u.x+fwd*(-IMPACT_X)*SC;
     if(f>=2&&f<=10){ // 하늘의 별자리 선: 마법진 별 6개를 잇는 빛줄기
       const k=Math.min(1,(f-2)/5),ccx=ix,ccy=GY-150;c.strokeStyle='rgba(190,215,255,'+(0.55*k)+')';c.lineWidth=1.5;c.beginPath();
       for(let i=0;i<=6;i++){const a=i/6*Math.PI*2+tm*0.6,x=ccx+Math.cos(a)*46,y=ccy+Math.sin(a)*16;i?c.lineTo(x,y):c.moveTo(x,y);}c.stroke();
@@ -109,7 +120,10 @@ window.drawEunhaUnit=function(c,u,ft){
   if(ft>0){const q=ft/0.6;c.globalAlpha=Math.max(0,1-q);c.translate(-fwd*q*60,-q*30);}
   else{c.fillStyle='rgba(20,10,60,0.35)';c.beginPath();c.ellipse(cx,GY+2,70,6,0,0,7);c.fill();}
   if(ft===0)drawBack(c,u,st,st.t,cx,cy,state);
-  if(ready())frame(c,state,f,u.x,GY,SC,flip);else window.drawEunhaIcon(c,u.x-80,GY-110,160,140,flip);
+  if(ready()&&state==='attack'&&u.ztx!=null){ // 원거리: 몸통은 제자리, 원본 효과는 착탄 지점으로 이동
+    framePart(c,state,f,u.x,GY,SC,flip,'body');
+    const shift=u.ztx-(u.x+fwd*(-IMPACT_X)*SC);framePart(c,state,f,u.x+shift,GY,SC,flip,'fx');}
+  else if(ready())frame(c,state,f,u.x,GY,SC,flip);else window.drawEunhaIcon(c,u.x-80,GY-110,160,140,flip);
   if(u.hf>0&&ft===0){c.globalCompositeOperation='lighter';c.globalAlpha=0.6;window.drawEunhaIcon(c,cx-86,cy-74,172,148,flip);c.globalCompositeOperation='source-over';c.globalAlpha=1;}
   c.restore();
   if(ft===0)drawFront(c,u,st,st.t,cx,cy,state,f,fwd);
