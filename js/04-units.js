@@ -156,6 +156,9 @@ for(const u of MY){
               u.t==='R'&&u.cost>=800?Math.max(23,u.cool):u.cool;
  u.cool=Math.round(target*10)/10;
 }
+// 울트라 슈퍼 레어 전체 버프: 체력·공격력 +20% (새 UR에도 자동 적용)
+const UR_BUFF=1.2;
+MY.filter(u=>u.t==='UR').forEach(u=>{u.hp=Math.round(u.hp*UR_BUFF);u.atk=u.atk*UR_BUFF;});
 const ATKM=2.5; // 공격력 전체 상향 (전투가 너무 길어서 아군·적 모두 ×2.5)
 MY.forEach(u=>{u.atk*=ATKM;});
 
