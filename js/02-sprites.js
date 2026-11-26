@@ -69,6 +69,7 @@ function unitSpriteImage(u){
 }
 // 원본 그리드를 그려 PNG 로딩 전에도 그림이 끊기지 않게 합니다.
 function drawUnitSprite(c,u,x,y,s,flip){
+  if(u&&u.eunha&&window.drawEunhaIcon){window.drawEunhaIcon(c,x,y,(u.spriteW||86)*s,(u.spriteH||74)*s,flip);return;}
   if(u&&u.train&&window.drawSteamTrainIcon){window.drawSteamTrainIcon(c,x,y,(u.spriteW||88)*s,(u.spriteH||42)*s,flip,u.trainSkin);return;}
   const image=unitSpriteImage(u),w=(u.spriteW||Math.max(...u.grid.map(r=>r.length)))*s,h=(u.spriteH||u.grid.length)*s;
   c.imageSmoothingEnabled=false;

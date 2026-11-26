@@ -337,7 +337,7 @@ function makeViewUnit(id,side,unitId,form,x){
  return {id,team:teamOf(side),T,x,tx:x,hp:1,max:1,kt:0,at:0,ad:0,mv:0,sl:0,fr:0,ph:Math.random()*3,pvp:true};
 }
 function applyEvent(e){
- if(e.k==='atk'){const d=view.units.get(e.id);if(d){d.ad=Math.min(AD[d.T.an]||.35,Math.max(.3,d.T.cd||1)*.8);if(d.T.train)d.ad=window.STEAM_TRAIN_TIMING?STEAM_TRAIN_TIMING.attack:.9;d.at=d.ad;}}
+ if(e.k==='atk'){const d=view.units.get(e.id);if(d){d.ad=Math.min(AD[d.T.an]||.35,Math.max(.3,d.T.cd||1)*.8);if(d.T.adFix)d.ad=d.T.adFix;if(d.T.train)d.ad=window.STEAM_TRAIN_TIMING?STEAM_TRAIN_TIMING.attack:.9;d.at=d.ad;}}
  else if(e.k==='hit'){const x=mirrorX(e.x);if(view.spk.length<70)for(let j=0;j<4;j++)view.spk.push({x:x+(Math.random()-.5)*18,y:GY-8-Math.random()*46,t:0,col:j%2?'#81e6ff':'#ffe376'});sfxHit();}
  else if(e.k==='kb'){const d=view.units.get(e.id);if(d)d.kt=.35;}
  else if(e.k==='die'){let d=view.units.get(e.id);if(!d)d=makeViewUnit(e.id,e.s,e.u,e.f,mirrorX(e.x));if(d){view.units.delete(e.id);d.at=0;d.kt=0;view.fx.push({u:d,t:0});}}

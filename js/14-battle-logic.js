@@ -44,7 +44,7 @@ function update(dt){
       u.mv=1;u.x+=dir*u.T.speed*sf*dt;
     }
   }
-  for(const u of S.units)if(u.hp<=0){S.fx.push({u,t:0});if(u.team===1){qs.kills++;const rw=Math.round(u.T.rw*(1+0.5*basicProgress('accounting'))*(S.killMoney||1));S.money=Math.min(S.maxM,S.money+rw);S.pop.push({x:u.x,t:0,s:'+'+rw+'원',c:'#7be07b'});}}
+  for(const u of S.units)if(u.hp<=0){S.fx.push({u,t:0});if(u.team===1){qs.kills++;if(u.boss)qs.boss=(qs.boss||0)+1;const rw=Math.round(u.T.rw*(1+0.5*basicProgress('accounting'))*(S.killMoney||1));S.money=Math.min(S.maxM,S.money+rw);S.pop.push({x:u.x,t:0,s:'+'+rw+'원',c:'#7be07b'});}}
   S.units=S.units.filter(u=>u.hp>0);
   S.fx.forEach(f=>f.t+=dt);S.fx=S.fx.filter(f=>f.t<0.6);S.pop.forEach(p=>p.t+=dt);S.pop=S.pop.filter(p=>p.t<0.7);
   S.dust.forEach(p=>p.t+=dt);S.dust=S.dust.filter(p=>p.t<0.4);S.spk.forEach(p=>p.t+=dt);S.spk=S.spk.filter(p=>p.t<0.25);S.ring.forEach(r=>r.t+=dt);S.ring=S.ring.filter(r=>r.t<0.8);

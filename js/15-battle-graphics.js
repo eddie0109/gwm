@@ -5,6 +5,7 @@ function castleHpText(en,my){g.font='bold 14px sans-serif';
   txt(en,Math.max(35,g.measureText(en).width/2+6),128,14);txt(my,Math.min(W-38,W-g.measureText(my).width/2-6),128,14);}
 function dsp(u,ft){
   if(u.T.train&&window.drawSteamTrainUnit){window.drawSteamTrainUnit(g,u,ft);return;}
+  if(u.T.eunha&&window.drawEunhaUnit){window.drawEunhaUnit(g,u,ft);return;}
   if(u.T.pilssam&&window.PILSSAM){PILSSAM.draw(g,u,ft);return;}
   const T=u.T,grid=u.team===0?T.grid:u.code==='O'?CORN_EX:u.code==='C'||u.code==='0'?TOOTH_EX:u.code==='Ω'?CORN_EX:u.code==='A'?deco(FIGHT,['armor','wings']):(T.grid||TPL[T.tpl]),s=T.s,h=(T.spriteH||grid.length)*s,w=(T.spriteW||Math.max(...grid.map(r=>r.length)))*s,dir=u.team===0?-1:1,an=T.an;
   let ox=0,oy=-(T.float?8:0),rot=0,al=1,sx=1,sy=1;

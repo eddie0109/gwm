@@ -124,3 +124,10 @@
 #acMigrate summary{cursor:pointer;font-weight:800}
 .acct-help{font-size:.78rem;line-height:1.5;margin:6px 0!important}
 #gsiBtn{display:flex;align-items:center;justify-content:center;min-height:44px}
+/* 퀘스트: 탭 + 모두 받기 + 진행 막대 */
+.q-head{display:flex;gap:8px;align-items:center;position:sticky;top:0;z-index:2;padding:4px 0;background:inherit}
+.q-head .chtab{flex:1;margin:0}
+.q-all{white-space:nowrap;font-size:1rem;padding:8px 14px;background:linear-gradient(#a8ffb0,#4fd56a 55%,#2a9d48);border-color:#1d5a2a}
+.q-reset{font-size:.82rem;margin:2px 0 6px!important}
+.q-bar{height:7px;background:#00000022;border-radius:4px;margin:4px 0 2px;overflow:hidden}.q-bar i{display:block;height:100%;background:linear-gradient(90deg,#ffd84a,#ff9d1c)}
+.q-done{opacity:.55}

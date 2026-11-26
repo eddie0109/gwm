@@ -32,6 +32,7 @@ function showUnitInfo(k){
   special.push(u.area?'범위 공격: 사거리 안의 여러 적 공격':'단일 공격: 한 번에 적 하나 공격');
   if(u.leap)special.push('원거리 도약 공격: 가까운 적은 공격하지 못함 (최소 사거리 '+u.minR+')');
   if(u.slowS)special.push('느리게: 강한 속성의 적에게 공격이 적중하면 3초 동안 이동·공격 속도 크게 감소');if(u.freezeStrong)special.push('정지: 강한 속성의 적에게 '+Math.round(u.freezeStrong*100)+'% 확률로 '+u.freezeTime+'초 정지');if(u.freezeNeutral)special.push('정지: 무속성 적에게만 '+Math.round(u.freezeNeutral*100)+'% 확률로 '+u.freezeTime+'초 정지');
+  if(u.slowOnHit)special.push('느리게: 공격에 맞은 적은 '+u.slowOnHit+'초 동안 이동·공격이 느려짐');
   if(u.alienMult)special.push('에일리언 특효: 에일리언 적에게 '+u.alienMult+'배 데미지');
   if(u.kb>=5)special.push('히트백 '+u.kb+'회: 체력이 '+u.kb+'번 깎일 때마다 한 번씩만 밀려남');
   if(u.dodge)special.push('공격 무효: 모든 적의 공격을 '+Math.round(u.dodge*100)+'% 확률로 무효화');
@@ -114,20 +115,21 @@ function spawnMy(k){const T=fm(MY[k]),m=lm(T.id),h=T.hp*m*tnm(T.id,'hp');
 const STAR_ALIENS={};
 // 같은 스테이지는 항상 같은 순서·타이밍·종류로 적이 나오도록 스테이지 번호로 고정된 난수를 씁니다.
 function stageRng(key){return seededRand(1000003+key*7919);}
-function spawnEn(code,boss){if(STAR_ALIENS[code]&&!S.space)return;if(MATH_BOSSES[code]){spawnPilssam(code);return;}if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),scale=CH>=3?(ENTY[code].includes('에일리언')?futureAlienMult()*(CH===3?1:CH===4?1.25:1.55):1.15):WORLD_ENEMY_SCALE,h=e[1]*S.mult*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1),kb=boss?2:3;
-  S.units.push({team:1,boss,code,T:{name:e[0],grid:enemyGrid(code),float:!!ENEMY_FLOAT[code],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:enemyScale(code,e[6]),col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
+function spawnEn(code,boss){if(STAR_ALIENS[code]&&!S.space)return;if(MATH_BOSSES[code]){spawnPilssam(code);return;}if(code==='O'&&!(CH===1&&stageIdx===47&&boss))return;if(!seenEnemies[code]){seenEnemies[code]=1;save();}const e=EN[code],area=ENAR.includes(code),scale=CH>=3?(ENTY[code].includes('에일리언')?futureAlienMult()*(CH===3?1:CH===4?1.25:1.55):1.15):WORLD_ENEMY_SCALE,h=e[1]*S.mult*ENM*scale*ENEMY_HP_NERF*(boss?2*BOSS_HP_FACTOR:1)*(isMathCH(CH)?MATH_SCALE:1),kb=boss?2:3;
+  S.units.push({team:1,boss,code,T:{name:e[0],grid:enemyGrid(code),float:!!ENEMY_FLOAT[code],hp:h,atk:e[2]*(0.8+S.mult*0.2)*ENM*scale*ENEMY_ATK_NERF*(boss?1.5*BOSS_ATK_FACTOR:1)*(isMathCH(CH)?MATH_SCALE:1),speed:e[3],range:Math.round(e[4]*(area?1.3:1)),cd:code==='C'&&boss?0.7:code==='O'&&boss?4:boss?1.3:1,s:enemyScale(code,e[6]),col:e[5],tpl:e[7],acc:e[8],ty:ENTY[code],rw:ENR[code],an:ENAN[code],slowOnHit:code==='O'?2:0,area},x:80,hp:h,max:h,kbn:kb,nk:h-h/kb,t:0,kt:0,at:0,ph:Math.random()*3});
   if(boss){sfx('boss');S.shake=0.7;S.bw=1.4;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}} // 보스 등장: 아군 전체가 와르르 밀려나요
 }
 // 수학편 최종 보스 필쌤: 시안 수치를 그대로 쓰기 위해 장 배율을 곱하지 않습니다.
 function spawnPilssam(code){
   const b=MATH_BOSSES[code],info=PILSSAM.info[b.n];if(!seenEnemies[code]){seenEnemies[code]=1;save();}
-  S.units.push({team:1,boss:true,code,T:{name:b.name,pilssam:b.n,hp:b.hp,atk:b.atk,speed:b.speed,range:b.range,cd:b.cd,s:1,ty:['무속성'],rw:b.rw,an:'pilssam',area:b.area,
-    adFix:info.ad,hitTimes:info.hits,redPen:b.redPen||0},x:80,hp:b.hp,max:b.hp,kbn:b.kb,nk:b.hp-b.hp/b.kb,t:1.5,kt:0,at:0,ph:0});
+  const hp=b.hp*MATH_SCALE;
+  S.units.push({team:1,boss:true,code,T:{name:b.name,pilssam:b.n,hp,atk:b.atk*MATH_SCALE,speed:b.speed,range:b.range,cd:b.cd,s:1,ty:['무속성'],rw:b.rw,an:'pilssam',area:b.area,
+    adFix:info.ad,hitTimes:info.hits,redPen:b.redPen||0},x:80,hp,max:hp,kbn:b.kb,nk:hp-hp/b.kb,t:1.5,kt:0,at:0,ph:0});
   sfx('boss');S.shake=0.9;S.bw=1.6;S.ring.push({x:80,t:0});for(const o of S.units)if(o.team===0){o.kt=0.5;o.kv=420;o.t=Math.max(o.t,1);}
 }
 function deploy(k){
   if(!S||S.over||S.paused||!MY[k]||!avail(MY[k]))return;if(S.rule&&!ruleAllows(S.rule,MY[k],SL.indexOf(k)))return;const T=MY[k],c=Math.round(fm(T).cost*S.cm);
-  if(S.money>=c&&S.cool[k]<=0){S.money-=c;S.cool[k]=unitCooldown(T);spawnMy(k);if(T.t==='UR'){S.ring.push({x:W-80,t:0,ally:true});S.shake=Math.max(S.shake,.12);for(let q=0;q<16;q++)S.spk.push({x:W-80+(Math.random()-.5)*75,y:GY-30-Math.random()*100,t:0,col:['#fbec9a','#e989ff','#93ebff'][q%3]});}sfx('dep');}
+  if(S.money>=c&&S.cool[k]<=0){S.money-=c;S.cool[k]=unitCooldown(T);spawnMy(k);qs.dep=(qs.dep||0)+1;if(T.t==='UR'){S.ring.push({x:W-80,t:0,ally:true});S.shake=Math.max(S.shake,.12);for(let q=0;q<16;q++)S.spk.push({x:W-80+(Math.random()-.5)*75,y:GY-30-Math.random()*100,t:0,col:['#fbec9a','#e989ff','#93ebff'][q%3]});}sfx('dep');}
 }
 addEventListener('keydown',e=>{if($('battle').classList.contains('hide'))return;
   if(e.code==='Escape')setPause(!(S&&S.paused));
