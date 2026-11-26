@@ -232,7 +232,7 @@ function command(side,kind,slot){
   p.cool[slot]=Math.max(floor,v.T.cool*(1-.75*r));p.coolMax[slot]=p.cool[slot];
   const kb=Math.max(1,v.T.kb||2),x=side===0?720:80;
   s.units.push({id:++s.seq,side,unitId:item.id,form:item.form||1,x,hp:v.hp,maxHp:v.hp,atk:v.T.atk,range:bounded(v.T.range,18,400),minR:bounded(v.T.minR||0,0,350,0),speed:v.T.speed,cd:Math.max(.3,v.T.cd),timer:0,area:!!v.T.area,ty:v.T.ty||['무속성'],
-   freezeNeutral:v.T.freezeNeutral||0,freezeStrong:v.T.freezeStrong||0,freezeTime:v.T.freezeTime||0,slowS:!!v.T.slowS,dodge:v.T.dodge||0,alienMult:v.T.alienMult||0,hitDelay:v.T.hitDelay||0,kbRecover:!!v.T.kbRecover,
+   freezeNeutral:v.T.freezeNeutral||0,freezeStrong:v.T.freezeStrong||0,freezeTime:v.T.freezeTime||0,slowS:!!v.T.slowS,dodge:v.T.dodge||0,alienMult:v.T.alienMult||0,hitDelay:v.T.hitDelay||0,kbRecover:!!v.T.kbRecover,zone:v.T.zone||0,
    slow:0,freeze:0,dh:0,mv:false,an:v.T.an||'slash',kb,kbn:v.hp-(v.hp/kb),hitEvT:-1,popT:-1});
   ev('spawn',{x,u:item.id});
  }
@@ -262,6 +262,8 @@ function deal(attacker,target,value){
 }
 function strikePv(u){
  const s=pv.sim,dir=u.side===0?-1:1;
+ if(u.zone&&u.ztx!=null){for(const v of s.units)if(v.side!==u.side&&v.hp>0&&Math.abs(v.x-u.ztx)<=u.zone)deal(u,v,u.atk);
+  const bx=u.side===0?55:745;if(Math.abs(bx-u.ztx)<=u.zone+40){const defend=s.players[1-u.side];defend.baseHp=Math.max(0,defend.baseHp-u.atk*effMult(u.side,['무속성'],u.ty));}return;}
  const foes=s.units.filter(v=>v.side!==u.side&&v.hp>0&&(v.x-u.x)*dir>=-10);
  let target=null,best=Infinity;for(const v of foes){const dist=(v.x-u.x)*dir;if(dist<best){best=dist;target=v;}}
  const baseX=u.side===0?55:745,baseDist=(baseX-u.x)*dir;
@@ -298,7 +300,7 @@ function tick(dt){
   // 사거리 안에 적이 있으면 멈춤 (최소 사거리 유닛은 너무 가까운 적 앞에서도 멈춰서 기다림)
   const blocked=target&&best<=u.range;
   if(canHit||canBase){
-   if(u.timer<=0){u.timer=u.cd;ev('atk',{id:u.id});
+   if(u.timer<=0){u.timer=u.cd;if(u.zone)u.ztx=canHit?target.x:baseX;ev('atk',u.zone?{id:u.id,zx:Math.round(u.ztx)}:{id:u.id});
     if(u.hitDelay)u.dh=u.hitDelay;else strikePv(u);}
   }else if(!blocked){u.x=Math.max(55,Math.min(745,u.x+dir*u.speed*(u.slow>0?.25:1)*dt));u.mv=true;}
  }
@@ -337,7 +339,7 @@ function makeViewUnit(id,side,unitId,form,x){
  return {id,team:teamOf(side),T,x,tx:x,hp:1,max:1,kt:0,at:0,ad:0,mv:0,sl:0,fr:0,ph:Math.random()*3,pvp:true};
 }
 function applyEvent(e){
- if(e.k==='atk'){const d=view.units.get(e.id);if(d){d.ad=Math.min(AD[d.T.an]||.35,Math.max(.3,d.T.cd||1)*.8);if(d.T.adFix)d.ad=d.T.adFix;if(d.T.train)d.ad=window.STEAM_TRAIN_TIMING?STEAM_TRAIN_TIMING.attack:.9;d.at=d.ad;}}
+ if(e.k==='atk'){const d=view.units.get(e.id);if(d){d.ad=Math.min(AD[d.T.an]||.35,Math.max(.3,d.T.cd||1)*.8);if(d.T.adFix)d.ad=d.T.adFix;if(e.zx!=null)d.ztx=mirrorX(e.zx);if(d.T.train)d.ad=window.STEAM_TRAIN_TIMING?STEAM_TRAIN_TIMING.attack:.9;d.at=d.ad;}}
  else if(e.k==='hit'){const x=mirrorX(e.x);if(view.spk.length<70)for(let j=0;j<4;j++)view.spk.push({x:x+(Math.random()-.5)*18,y:GY-8-Math.random()*46,t:0,col:j%2?'#81e6ff':'#ffe376'});sfxHit();}
  else if(e.k==='kb'){const d=view.units.get(e.id);if(d)d.kt=.35;}
  else if(e.k==='die'){let d=view.units.get(e.id);if(!d)d=makeViewUnit(e.id,e.s,e.u,e.f,mirrorX(e.x));if(d){view.units.delete(e.id);d.at=0;d.kt=0;view.fx.push({u:d,t:0});}}
